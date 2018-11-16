@@ -97,7 +97,7 @@ all: $(NAME)
 $(NAME): $(OBJ_FILES)
 	ar rcs $@ $^
 
-$(OBJ_DIR)%.o: $(SRC_DIR)%.c | $(OBJ_DIR)
+$(OBJ_FILES): $(OBJ_DIR)%.o: $(SRC_DIR)%.c | $(OBJ_DIR)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(OBJ_DIR):
