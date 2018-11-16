@@ -1,0 +1,14 @@
+-------------------------------------------------------------------------------
+• Within the mandatory part, you are allowed to use the following functions:
+◦ open(2)
+◦ close(2)
+◦ mmap(2)
+◦ munmap(2)
+◦ write(2)
+◦ fstat(2)
+◦ malloc(3)
+◦ free(3)
+
+-------------------------------------------------------------------------------
+i guess read is forbidden so we have to use mmap and munmap
+
