@@ -1,34 +1,19 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   main.c                                             :+:      :+:    :+:   */
+/*   nm.h                                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2018/11/16 01:02:57 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/16 01:03:07 by asarandi         ###   ########.fr       */
+/*   Created: 2018/11/16 01:01:27 by asarandi          #+#    #+#             */
+/*   Updated: 2018/11/16 01:02:03 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "otool.h"
+#ifndef NM_H
+# define NM_H
 
-int	show_usage(void)
-{
-	ft_printf("%s usage\n", __FILE__);
-	return (0);
-}
+#include "libft.h"
+#include "libftprintf.h"
 
-int main(int ac, char **av)
-{
-	int	i;
-
-	i = 1;
-	while (i < ac)
-	{
-		ft_printf("process file: %s\n", av[i]);
-		i++;
-	}
-	if (i == 1)
-		(void)show_usage();
-	return (0);
-}
+#endif
