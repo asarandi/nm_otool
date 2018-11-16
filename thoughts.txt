@@ -12,3 +12,9 @@
 -------------------------------------------------------------------------------
 i guess read is forbidden so we have to use mmap and munmap
 
+
+/usr/include/mach-o/loader.h
+
+https://lowlevelbits.org/parsing-mach-o-files/
+https://www.objc.io/issues/6-build-tools/mach-o-executables/
+https://samhuri.net/posts/2010/01/basics-of-the-mach-o-file-format
