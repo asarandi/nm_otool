@@ -1,9 +1,9 @@
-CFLAGS		+= -Wall -Werror -Wextra
+CFLAGS		+= -g -Wall -Werror -Wextra
 CFLAGS		+= -I inc/ -I libft/inc/
-LDFLAGS		+= -Wall -Werror -Wextra -L libft/ -lft
-NM			= nm
+LDFLAGS		+= -g -Wall -Werror -Wextra -L libft/ -lft
+NM			= ft_nm
 NM_FILES	= main.c
-OTOOL		= otool
+OTOOL		= ft_otool
 OTOOL_FILES	= main.c
 LIBFT		= libft/libft.a
 SRC_DIR		= src/
@@ -58,3 +58,5 @@ norminette:
 
 norm: norminette
 
+samples:
+	git clone https://github.com/JonathanSalwan/binary-samples

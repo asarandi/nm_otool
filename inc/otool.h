@@ -6,14 +6,13 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/16 01:01:27 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/16 01:02:45 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/17 02:21:05 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef OTOOL_H
 # define OTOOL_H
 
-#include "libft.h"
-#include "libftprintf.h"
+#include "common.h"
 
 #endif
