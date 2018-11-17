@@ -6,7 +6,7 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/16 01:02:15 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/17 07:55:11 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/17 08:17:02 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,6 +59,22 @@ int	is_valid_magic(void *map, int *is_64bit, int *is_swapped)
 		return (1);
 	}
 	return (0);
+}
+
+
+uint16_t	swap16(int is_swapped, uint16_t x)
+{
+	uint16_t	res;
+
+	res = 0;
+	if (is_swapped)
+	{
+		res += (x >> 0x08) & 0x00ff;
+		res += (x << 0x08) & 0xff00;
+	}
+	else
+		res = x;
+	return (res);
 }
 
 uint32_t	swap32(int is_swapped, uint32_t x)
@@ -162,7 +178,26 @@ int	nm_symtab(char *fn, void *map, off_t fsize, struct symtab_command *stc, int 
 		nlist = (struct nlist *)&map[symoff + i * symsize];
 		uint32_t n_strx = swap32(is_swapped, nlist->n_un.n_strx);
 		char *symname = (char *)&map[stroff + n_strx];
-		ft_printf("%s\n", symname);
+
+
+		uint8_t type = nlist->n_type;
+		uint8_t sect = nlist->n_sect;
+		uint16_t desc = swap16(is_swapped, nlist->n_desc);
+		uint64_t val64;
+		uint32_t val32;
+
+		if (is_64bit)
+			val64 = swap64(is_swapped, nlist->n_value);
+		else
+			val32 = swap32(is_swapped, nlist->n_value);
+
+
+
+		ft_printf("type = %02hhx, sect = %02hhx, desc = %04hx, ", type, sect, desc);
+		if (is_64bit)
+			ft_printf("value = %016llx, name = %s\n", val64, symname);
+		else
+			ft_printf("value = %08x, name = %s\n", val32, symname);
 
 		i++;
 	}
