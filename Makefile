@@ -5,26 +5,31 @@ NM			= ft_nm
 NM_FILES	= main.c
 OTOOL		= ft_otool
 OTOOL_FILES	= main.c
+SHAREDFILES	= swap.c messages.c validate.c
 LIBFT		= libft/libft.a
 SRC_DIR		= src/
 OBJ_DIR		= obj/
-OBJFOLDERS	:= $(OBJ_DIR) $(OBJ_DIR)$(NM)/ $(OBJ_DIR)$(OTOOL)/
+SHARED_OBJS	= $(addprefix $(OBJ_DIR), $(SHAREDFILES:.c=.o))
+OBJFOLDERS	:= $(OBJ_DIR) $(OBJ_DIR)$(NM)/ $(OBJ_DIR)$(OTOOL)
 NM_OBJS		= $(addprefix $(OBJ_DIR)$(NM)/, $(NM_FILES:.c=.o))
 OTOOL_OBJS	= $(addprefix $(OBJ_DIR)$(OTOOL)/, $(OTOOL_FILES:.c=.o))
 
 
 all: $(NM) $(OTOOL)
 
-$(NM): $(NM_OBJS) | $(LIBFT)
-	$(CC) $(LDFLAGS) -o $@ $<
+$(NM): $(NM_OBJS) $(SHARED_OBJS) | $(LIBFT)
+	$(CC) $(LDFLAGS) -o $@ $^
 
-$(OTOOL): $(OTOOL_OBJS) | $(LIBFT)
-	$(CC) $(LDFLAGS) -o $@ $<
+$(OTOOL): $(OTOOL_OBJS) $(SHARED_OBJS) | $(LIBFT)
+	$(CC) $(LDFLAGS) -o $@ $^
 
 $(NM_OBJS): $(OBJ_DIR)$(NM)/%.o : $(SRC_DIR)$(NM)/%.c | $(OBJ_DIR)$(NM)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(OTOOL_OBJS): $(OBJ_DIR)$(OTOOL)/%.o : $(SRC_DIR)$(OTOOL)/%.c | $(OBJ_DIR)$(OTOOL)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(SHARED_OBJS): $(OBJ_DIR)%.o : $(SRC_DIR)%.c | $(OBJ_DIR)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(LIBFT):

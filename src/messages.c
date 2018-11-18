@@ -1,28 +1,32 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   main.c                                             :+:      :+:    :+:   */
+/*   messages.c                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2018/11/16 01:02:57 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/18 03:26:26 by asarandi         ###   ########.fr       */
+/*   Created: 2018/11/18 02:49:51 by asarandi          #+#    #+#             */
+/*   Updated: 2018/11/18 04:38:18 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "otool.h"
+#include "common.h"
 
-int main(int ac, char **av)
+int	show_usage(char *s1)
 {
-	int	i;
-
-	i = 1;
-	while (i < ac)
-	{
-		ft_printf("process file: %s\n", av[i]);
-		i++;
-	}
-	if (i == 1)
-		(void)show_usage(av[1]);
+	ft_printf("usage: %s file\n", s1);
 	return (0);
+}
+
+int	msgerr(char *err, char *fn)
+{
+	ft_fprintf(STDERR_FILENO,
+			"{red}error{eoc} [{yellow}%s{eoc}]: %s\n", err, fn);
+	return (1);
+}
+
+int	fclose_msgerr(int fd, char *s1, char *s2)
+{
+	(void)close(fd);
+	return (msgerr(s1, s2));
 }

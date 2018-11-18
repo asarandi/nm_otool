@@ -6,115 +6,94 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/16 01:02:15 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/17 08:17:02 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/18 06:44:16 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "nm.h"
-#include <mach-o/loader.h>
-#include <mach-o/nlist.h>
+#define debug	1
 
-#define E_OPEN_ERR		"open() failed"
-#define E_FSTAT_ERR		"fstat() failed"
-#define E_MMAP_ERR		"mmap() failed"
-#define E_MUNMAP_ERR	"munmap() failed"
-#define E_FILE_EMPTY	"file is empty"
-#define E_BADMAGIC_ERR	"not a valid mach-o file"
-#define E_FNOTREG_ERR	"not a regular file"
+/*
+** returns matching load command by index or NULL
+** for example 2nd LC_SEGMENT or first LC_SYMTAB
+*/
 
-int	show_usage(char *s1)
+t_lc	*get_lcmd_by_index(t_machof *f, uint32_t cmd, uint32_t idx)
 {
-	ft_printf("usage: %s file\n", s1);
-	return (0);
-}
+	uint32_t	i;
+	uint32_t	counter;
+	off_t		offset;
+	t_lc		*lcmd;
 
-int	msgerr(char *err, char *fn)
-{
-	ft_fprintf(STDERR_FILENO,
-			"{red}error{eoc} [{yellow}%s{eoc}]: %s\n", err, fn);
-	return (0);
-}
-
-int	fclose_msgerr(int fd, char *s1, char *s2)
-{
-	(void)close(fd);
-	return (msgerr(s1, s2));
-}
-
-int	is_valid_magic(void *map, int *is_64bit, int *is_swapped)
-{
-	struct mach_header	*mh;
-
-	mh = (struct mach_header *)map;
-	if ((mh->magic == MH_MAGIC_64) || (mh->magic == MH_CIGAM_64))
+	i = 0;
+	counter = 0;
+	offset = sizeof(struct mach_header_64);
+	if (f->is_64bit == 0)
+		offset = sizeof(struct mach_header);
+	while (i < f->ncmds)
 	{
-		*is_64bit = 1;
-		*is_swapped = (mh->magic == MH_MAGIC_64) ? 0 : 1;
-		return (1);
+		lcmd = (struct load_command *)&f->map[offset];
+		if (lcmd->cmd == cmd)
+		{
+			if (counter == idx)
+				return (lcmd);
+			counter++;
+		}
+		offset += swap32(f->is_swapped, lcmd->cmdsize);
+		i++;
 	}
-	if ((mh->magic == MH_MAGIC) || (mh->magic == MH_CIGAM))
-	{
-		*is_64bit = 0;
-		*is_swapped = (mh->magic == MH_MAGIC) ? 0 : 1;
-		return (1);
-	}
-	return (0);
+	return (NULL);
 }
 
 
-uint16_t	swap16(int is_swapped, uint16_t x)
+//struct section
+//struct section_64
+
+void	*get_section_by_number(t_machof *f, uint8_t sect)
 {
-	uint16_t	res;
+	uint32_t	lctype;
+	void		*segment;
+	uint32_t	iseg;
+	uint32_t	nsects;
+	uint32_t	total_sects;
+	
 
-	res = 0;
-	if (is_swapped)
+	lctype = LC_SEGMENT_64;
+	if (f->is_64bit == 0)
+		lctype = LC_SEGMENT;
+	iseg = 0;
+	total_sects = 0;
+	while ((segment = get_lcmd_by_index(f, lctype, iseg++)) != NULL)
 	{
-		res += (x >> 0x08) & 0x00ff;
-		res += (x << 0x08) & 0xff00;
+		if (f->is_64bit == 1)
+			nsects = ((struct segment_command_64 *) segment)->nsects;
+		else
+			nsects = ((struct segment_command *) segment)->nsects;
+		if (nsects > 0)
+		{
+			if ((sect >= total_sects) && (sect <= total_sects + nsects))
+			{
+				//found correct segment
+			if (f->is_64bit == 1)
+			{
+			//	segment += sizeof(struct segment_command_64);
+			//	segment += (sect - total_sects - 1) * sizeof(struct section_64);
+				return (segment);
+			}
+			else
+			{
+			//	segment += sizeof(struct segment_command);
+			//	segment += (sect - total_sects - 1) * sizeof(struct section);
+				return (segment);
+			}
+
+			}
+		}
+		total_sects += nsects;
 	}
-	else
-		res = x;
-	return (res);
+
+	return (NULL);
 }
-
-uint32_t	swap32(int is_swapped, uint32_t x)
-{
-	uint32_t	res;
-
-	res = 0;
-	if (is_swapped)
-	{
-		res += (x >> 0x18) & 0x000000ff;
-		res += (x >> 0x08) & 0x0000ff00;
-		res += (x << 0x08) & 0x00ff0000;
-		res += (x << 0x18) & 0xff000000;
-	}
-	else
-		res = x;
-	return (res);
-}
-
-uint64_t	swap64(int is_swapped, uint64_t x)
-{
-	uint64_t	res;
-
-	res = 0;
-	if (is_swapped)
-	{
-		res += (x >> 0x38) & 0x00000000000000ff;
-		res += (x >> 0x28) & 0x000000000000ff00;
-		res += (x >> 0x18) & 0x0000000000ff0000;
-		res += (x >> 0x08) & 0x00000000ff000000;
-		res += (x << 0x08) & 0x000000ff00000000;
-		res += (x << 0x18) & 0x0000ff0000000000;
-		res += (x << 0x28) & 0x00ff000000000000;
-		res += (x << 0x38) & 0xff00000000000000;
-	}
-	else
-		res = x;
-	return (res);
-}
-
 
 //
 //struct nlist {
@@ -145,59 +124,108 @@ uint64_t	swap64(int is_swapped, uint64_t x)
 //
 
 
-int	nm_symtab(char *fn, void *map, off_t fsize, struct symtab_command *stc, int is_swapped, int is_64bit)
+
+//---------------------------------------------------------------------------
+
+/*
+
+
+   U (undefined)
+   A (absolute)
+   T (text section symbol)
+   D (data section symbol)
+   B (bss section symbol)
+   C (common symbol)
+   - (for debugger symbol table entries)
+   S (symbol in a section other than those above)
+   I (indirect symbol)
+   -------------------
+   lowercase letters if the symbol is local
+
+
+//---------------------------------------------------------------------------
+
+       Each symbol name is preceded by its value (blanks if undefined).  Unless the -m option is specified, this value is followed by one of the following characters, representing the symbol type: U (undefined), A (absolute), T (text section symbol), D (data section symbol), B (bss section symbol),  C  (common  sym-
+       bol),  -  (for  debugger  symbol table entries; see -a below), S (symbol in a section other than those above), or I (indirect symbol).  If the symbol is local (non-external), the symbol's type is instead represented by the corresponding lowercase letter.  A lower case u in a dynamic shared library indicates a
+       undefined reference to a private external in another module in the same library.
+
+       If the symbol is a Objective C method, the symbol name is +-[Class_name(category_name) method:name:], where `+' is for class methods, `-' is for instance methods, and (category_name) is present only when the method is in a category.
+
+       The output is sorted alphabetically by default.
+*/
+
+
+void	debug1(t_machof *f)
 {
-	(void)fn;
-	(void)fsize;
-	(void)map;
-	ft_printf("    cmd = %08x\n", swap32(is_swapped, stc->cmd));
-	ft_printf("cmdsize = %08x\n", swap32(is_swapped, stc->cmdsize));
-	ft_printf(" symoff = %08x\n", swap32(is_swapped, stc->symoff));
-	ft_printf("  nsyms = %08x\n", swap32(is_swapped, stc->nsyms));
-	ft_printf(" stroff = %08x\n", swap32(is_swapped, stc->stroff));
-	ft_printf("strsize = %08x\n", swap32(is_swapped, stc->strsize));
+	ft_printf("LC_SYMTAB COMMAND at %08x\n", (void *)f->stc - f->map);
+	ft_printf("    cmd = %08x\n", swap32(f->is_swapped, f->stc->cmd));
+	ft_printf("cmdsize = %08x\n", swap32(f->is_swapped, f->stc->cmdsize));
+	ft_printf(" symoff = %08x\n", swap32(f->is_swapped, f->stc->symoff));
+	ft_printf("  nsyms = %08x\n", swap32(f->is_swapped, f->stc->nsyms));
+	ft_printf(" stroff = %08x\n", swap32(f->is_swapped, f->stc->stroff));
+	ft_printf("strsize = %08x\n", swap32(f->is_swapped, f->stc->strsize));
+}
 
+int	nm_symtab(t_machof *f)
+{
+	if (debug)	debug1(f);
 
-	uint32_t	symoff;
-	uint32_t	nsyms;
-	uint32_t	stroff;
-	uint32_t	strsize;
-	uint32_t	i;
-	symoff = swap32(is_swapped, stc->symoff);
-	nsyms = swap32(is_swapped, stc->nsyms);
-	stroff = swap32(is_swapped, stc->stroff);
-	strsize = swap32(is_swapped, stc->strsize);
-	i = 0;
-
+	uint32_t		i;
+	uint32_t		symoff;
+	uint32_t		nsyms;
+	uint32_t		stroff;
+	uint32_t		strsize;
+	ssize_t			symsize;
 	struct nlist	*nlist;
-	ssize_t symsize;
-	symsize = (is_64bit == 1) ? sizeof(struct nlist_64) : sizeof(struct nlist);
+	uint32_t		n_strx;
+	char			*symname;
+
+	symoff = swap32(f->is_swapped, f->stc->symoff);
+	nsyms = swap32(f->is_swapped, f->stc->nsyms);
+	stroff = swap32(f->is_swapped, f->stc->stroff);
+	strsize = swap32(f->is_swapped, f->stc->strsize);
+	symsize = (f->is_64bit == 1) ? sizeof(struct nlist_64) : sizeof(struct nlist);
+	i = 0;
 
 	while (i < nsyms)
 	{
-		nlist = (struct nlist *)&map[symoff + i * symsize];
-		uint32_t n_strx = swap32(is_swapped, nlist->n_un.n_strx);
-		char *symname = (char *)&map[stroff + n_strx];
+		nlist = (struct nlist *)&f->map[symoff + i * symsize];
+		n_strx = swap32(f->is_swapped, nlist->n_un.n_strx);
+		symname = (char *)&f->map[stroff + n_strx];
 
+		if ((n_strx != 0) && (*symname != 0))
+		{
 
 		uint8_t type = nlist->n_type;
 		uint8_t sect = nlist->n_sect;
-		uint16_t desc = swap16(is_swapped, nlist->n_desc);
-		uint64_t val64;
-		uint32_t val32;
+		uint16_t desc = swap16(f->is_swapped, nlist->n_desc);
+		uint64_t value;
+		void	*section;
 
-		if (is_64bit)
-			val64 = swap64(is_swapped, nlist->n_value);
+		if (f->is_64bit)
+			value = swap64(f->is_swapped, nlist->n_value);
 		else
-			val32 = swap32(is_swapped, nlist->n_value);
+			value = swap32(f->is_swapped, nlist->n_value);
+
+		if (sect != 0)
+		{
+			section = get_section_by_number(f, sect);
+
+			if (f->is_64bit)
+				value += swap64(f->is_swapped, ((struct segment_command_64 *)section)->vmaddr );
+			else
+				value += swap32(f->is_swapped, ((struct segment_command *) section)->vmaddr);
+
+		}
 
 
 
-		ft_printf("type = %02hhx, sect = %02hhx, desc = %04hx, ", type, sect, desc);
-		if (is_64bit)
-			ft_printf("value = %016llx, name = %s\n", val64, symname);
+		ft_printf("index = %08x, n_strx = %08x, type = %02hhx, sect = %02hhx, desc = %04hx, ", i, n_strx, type, sect, desc);
+		if (f->is_64bit)
+			ft_printf("value = %016llx, name = %s\n", value, symname);
 		else
-			ft_printf("value = %08x, name = %s\n", val32, symname);
+			ft_printf("value = %08x, name = %s\n", value, symname);
+		}
 
 		i++;
 	}
@@ -206,83 +234,93 @@ int	nm_symtab(char *fn, void *map, off_t fsize, struct symtab_command *stc, int 
 	return (0);
 }
 
-int	nm(char *fn, void *map, off_t fsize)
+
+
+/*
+** validate the magic and check load commands sizes;
+** returns 0 on success, 1 on failure (prints error msg)
+** will populate t_machof with values for other functions
+*/
+
+int	validate_macho(t_machof *f)
 {
-	int					is_64bit;
-	int					is_swapped;
-	uint32_t			ncmds;
 	uint32_t			i;
 	off_t				offset;
 	struct load_command	*lc;
-	struct mach_header	*mh;
-	struct symtab_command *stc;
-
-//struct symtab_command {
-//	uint32_t	cmd;		/* LC_SYMTAB */
-//	uint32_t	cmdsize;	/* sizeof(struct symtab_command) */
-//	uint32_t	symoff;		/* symbol table offset */
-//	uint32_t	nsyms;		/* number of symbol table entries */
-//	uint32_t	stroff;		/* string table offset */
-//	uint32_t	strsize;	/* string table size in bytes */
-//};
 
 
-	if (!is_valid_magic(map, &is_64bit, &is_swapped))
-		return (msgerr(E_BADMAGIC_ERR, fn));
-	mh = (struct mach_header *)map;
-	ncmds = swap32(is_swapped, mh->ncmds);
-
-	offset = (is_64bit == 1) ?
+	if (!is_valid_magic(f->map, &f->is_64bit, &f->is_swapped))
+		return (msgerr(E_BADMAGIC_ERR, f->fn));
+	f->mh = (struct mach_header *)f->map;
+	f->ncmds = swap32(f->is_swapped, f->mh->ncmds);
+	offset = (f->is_64bit == 1) ?
 		sizeof(struct mach_header_64) : sizeof(struct mach_header); 
 	i = 0;
-	while ((i < ncmds) && (offset < fsize))
+	while ((i < f->ncmds) && (offset < f->st.st_size))
 	{
-		lc = (struct load_command *)&map[offset];
-		if (swap32(is_swapped, lc->cmd) == LC_SYMTAB)
-		{
-			stc = (struct symtab_command *)&map[offset];
-			ft_printf("LC_SYMTAB command at %llx\n", offset);
-
-
-			(void)nm_symtab(fn, map, fsize, stc, is_swapped, is_64bit);
-		}
-		offset += swap32(is_swapped, lc->cmdsize);
+		lc = (struct load_command *)&f->map[offset];
+		offset += swap32(f->is_swapped, lc->cmdsize);
 		i++;
 	}
+	if (offset > f->st.st_size)
+		return (msgerr(E_BADOFFSET_ERR, f->fn));
 	return (0);
 }
 
-int	process_file(char *fn)
-{
-	int				fd;
-	struct stat		st;
-	void			*map;
 
-	if ((fd = open(fn, O_RDONLY)) == -1)
-		return (msgerr(E_OPEN_ERR, fn));
-	if (fstat(fd, &st) == -1)
-		return (fclose_msgerr(fd, E_FSTAT_ERR, fn));
-	if (st.st_size < 1)
-		return (fclose_msgerr(fd, E_FILE_EMPTY, fn));
-	if (!(st.st_mode & S_IFREG))
-		return (fclose_msgerr(fd, E_FNOTREG_ERR, fn));
-	map = mmap(0, st.st_size, PROT_READ, MAP_FILE | MAP_SHARED, fd, 0);
-	if (map == MAP_FAILED)
-		return (fclose_msgerr(fd, E_MMAP_ERR, fn));
-	(void)nm(fn, map, st.st_size);
-	if (munmap(map, st.st_size) == -1)
-		return (fclose_msgerr(fd, E_MUNMAP_ERR, fn));
-	(void)close(fd);
+int	nm(t_machof *f)
+{
+	uint32_t				isym;
+	struct symtab_command	*stc;
+	struct load_command		*lcmd;
+
+	if (validate_macho(f) != 0)
+		return (1);
+	isym = 0;
+	while ((lcmd = get_lcmd_by_index(f, LC_SYMTAB, isym++)) != NULL)
+	{
+		stc = (struct symtab_command *)lcmd;
+		f->stc = stc;
+		(void)nm_symtab(f);
+
+	}
+
+	return (0);
+}
+
+int	process_file(t_machof *f)
+{
+	if ((f->fd = open(f->fn, O_RDONLY)) == -1)
+		return (msgerr(E_OPEN_ERR, f->fn));
+	if (fstat(f->fd, &f->st) == -1)
+		return (fclose_msgerr(f->fd, E_FSTAT_ERR, f->fn));
+	if (f->st.st_size < 1)
+		return (fclose_msgerr(f->fd, E_FILE_EMPTY, f->fn));
+	if (!(f->st.st_mode & S_IFREG))
+		return (fclose_msgerr(f->fd, E_FNOTREG_ERR, f->fn));
+	f->map = mmap(0, f->st.st_size, PROT_READ, MAP_SHARED, f->fd, 0);
+	if (f->map == MAP_FAILED)
+		return (fclose_msgerr(f->fd, E_MMAP_ERR, f->fn));
+	(void)nm(f);
+	if (munmap(f->map, f->st.st_size) == -1)
+		return (fclose_msgerr(f->fd, E_MUNMAP_ERR, f->fn));
+	(void)close(f->fd);
 	return (0);
 }
 
 int main(int ac, char **av)
 {
-	int	i;
+	int			i;
+	t_machof	f;
 
 	i = 1;
 	while (i < ac)
-		(void)process_file(av[i++]);
+	{
+		(void)ft_memset(&f, 0, sizeof(t_machof));
+		f.fn = av[i];
+		(void)process_file(&f);
+		i++;
+	}
 	if (i == 1)
 		(void)show_usage(av[0]);
 	return (0);
