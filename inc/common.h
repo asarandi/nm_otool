@@ -6,7 +6,7 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/17 02:19:41 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/18 05:19:53 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/18 11:41:14 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,8 +52,18 @@ int			fclose_msgerr(int fd, char *s1, char *s2);
 int			is_valid_magic(void *map, int *is_64bit, int *is_swapped);
 int			msgerr(char *err, char *fn);
 int			show_usage(char *s1);
-uint16_t	swap16(int is_swapped, uint16_t x);
-uint32_t	swap32(int is_swapped, uint32_t x);
-uint64_t	swap64(int is_swapped, uint64_t x);
+uint16_t	swap16(t_machof *f, uint16_t x);
+uint32_t	swap32(t_machof *f, uint32_t x);
+uint64_t	swap64(t_machof *f, uint64_t x);
+uint32_t	nsects_in_segment(t_machof *f, void *segment);
+uint32_t	sizeof_mach_header(t_machof *f);
+uint32_t	sizeof_nlist(t_machof *f);
+uint32_t	sizeof_section(t_machof *f);
+uint32_t	sizeof_segment(t_machof *f);
+t_lc		*get_lcmd_by_index(t_machof *f, uint32_t cmd, uint32_t idx);
+void		*get_section_by_name_idx(t_machof *f, void *seg, char *sn, uint32_t i);
+void		*get_section_by_number(t_machof *f, uint8_t sect);
+void		*get_segment_by_name_idx(t_machof *f, char *segname, uint32_t idx);
+
 
 #endif

@@ -6,174 +6,13 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/16 01:02:15 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/18 09:24:37 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/18 11:42:37 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "nm.h"
 #define debug	1
 
-/*
-** returns matching load command by index or NULL
-** for example 2nd LC_SEGMENT or first LC_SYMTAB
-*/
-
-t_lc	*get_lcmd_by_index(t_machof *f, uint32_t cmd, uint32_t idx)
-{
-	uint32_t	i;
-	uint32_t	counter;
-	off_t		offset;
-	t_lc		*lcmd;
-
-	i = 0;
-	counter = 0;
-	offset = sizeof(struct mach_header_64);
-	if (f->is_64bit == 0)
-		offset = sizeof(struct mach_header);
-	while (i < f->ncmds)
-	{
-		lcmd = (struct load_command *)&f->map[offset];
-		if (swap32(f->is_swapped, lcmd->cmd) == cmd)
-		{
-			if (counter == idx)
-				return (lcmd);
-			counter++;
-		}
-		offset += swap32(f->is_swapped, lcmd->cmdsize);
-		i++;
-	}
-	return (NULL);
-}
-
-/*
-** search macho for a segment with a specific name
-** index is used in case there's multiple occurances of same seg name
-*/
-
-void	*get_segment_by_name_idx(t_machof *f, char *segname, uint32_t idx)
-{
-	uint32_t	lctype;
-	void		*segment;
-	uint32_t	iseg;
-	uint32_t	matches;
-	
-	lctype = LC_SEGMENT_64;
-	if (f->is_64bit == 0)
-		lctype = LC_SEGMENT;
-	iseg = 0;
-	matches = 0;
-	while ((segment = get_lcmd_by_index(f, lctype, iseg++)) != NULL)
-	{
-		if ((ft_strcmp(((struct segment_command *) segment)->segname,
-					segname)) == 0)
-		{
-			if (matches == idx)
-				return (segment);
-			matches++;
-		}
-	}
-	return (NULL);
-}
-
-
-uint32_t	sizeof_nlist(t_machof *f)
-{
-	if (f->is_64bit == 1)
-		return (sizeof(struct nlist_64));
-	else
-		return (sizeof(struct nlist));
-}
-
-uint32_t	sizeof_segment(t_machof *f)
-{
-	if (f->is_64bit == 1)
-		return (sizeof(struct segment_command_64));
-	else
-		return (sizeof(struct segment_command));
-
-}
-
-uint32_t	sizeof_section(t_machof *f)
-{
-	if (f->is_64bit == 1)
-		return (sizeof(struct section_64));
-	else
-		return (sizeof(struct section));
-}
-
-uint32_t	nsects_in_segment(t_machof *f, void *segment)
-{
-	if (f->is_64bit == 1)
-		return (((struct segment_command_64 *) segment)->nsects);
-	else
-		return (((struct segment_command *) segment)->nsects);
-}
-
-uint32_t	sizeof_mach_header(t_machof *f)
-{
-	if (f->is_64bit == 1)
-		return (sizeof(struct mach_header_64));
-	else
-		return (sizeof(struct mach_header));
-}
-
-void	*get_section_by_name_idx(t_machof *f, void *seg, char *sn, uint32_t i)
-{
-	uint32_t	matches;
-	uint32_t	nsects;
-	uint32_t	k;
-
-	nsects = nsects_in_segment(f, seg);
-	seg += sizeof_segment(f);
-	k = 0;
-	matches = 0;
-	while (k < nsects)
-	{
-		if (ft_strcmp(((struct section *) seg)->sectname, sn) == 0)
-		{
-			if (matches == i)
-				return (seg);
-			matches++;
-		}
-		seg += sizeof_section(f);
-		k++;
-	}
-	return (NULL);
-}
-
-
-
-
-//struct section
-//struct section_64
-
-void	*get_section_by_number(t_machof *f, uint8_t sect)
-{
-	uint32_t	lctype;
-	void		*segment;
-	uint32_t	iseg;
-	uint32_t	nsects;
-	uint32_t	total_sects;
-	
-
-	lctype = LC_SEGMENT_64;
-	if (f->is_64bit == 0)
-		lctype = LC_SEGMENT;
-	iseg = 0;
-	total_sects = 0;
-	while ((segment = get_lcmd_by_index(f, lctype, iseg++)) != NULL)
-	{
-		nsects = nsects_in_segment(f, segment);
-		if (nsects > 0)
-		{
-			if ((sect >= total_sects) && (sect <= total_sects + nsects))
-				return (segment);
-		}
-		total_sects += nsects;
-	}
-
-	return (NULL);
-}
 
 //
 //struct nlist {
@@ -238,12 +77,12 @@ void	*get_section_by_number(t_machof *f, uint8_t sect)
 void	debug1(t_machof *f)
 {
 	ft_printf("LC_SYMTAB COMMAND at %08x\n", (void *)f->stc - f->map);
-	ft_printf("    cmd = %08x\n", swap32(f->is_swapped, f->stc->cmd));
-	ft_printf("cmdsize = %08x\n", swap32(f->is_swapped, f->stc->cmdsize));
-	ft_printf(" symoff = %08x\n", swap32(f->is_swapped, f->stc->symoff));
-	ft_printf("  nsyms = %08x\n", swap32(f->is_swapped, f->stc->nsyms));
-	ft_printf(" stroff = %08x\n", swap32(f->is_swapped, f->stc->stroff));
-	ft_printf("strsize = %08x\n", swap32(f->is_swapped, f->stc->strsize));
+	ft_printf("    cmd = %08x\n", swap32(f, f->stc->cmd));
+	ft_printf("cmdsize = %08x\n", swap32(f, f->stc->cmdsize));
+	ft_printf(" symoff = %08x\n", swap32(f, f->stc->symoff));
+	ft_printf("  nsyms = %08x\n", swap32(f, f->stc->nsyms));
+	ft_printf(" stroff = %08x\n", swap32(f, f->stc->stroff));
+	ft_printf("strsize = %08x\n", swap32(f, f->stc->strsize));
 }
 
 int	nm_symtab(t_machof *f)
@@ -260,17 +99,17 @@ int	nm_symtab(t_machof *f)
 	uint32_t		n_strx;
 	char			*symname;
 
-	symoff = swap32(f->is_swapped, f->stc->symoff);
-	nsyms = swap32(f->is_swapped, f->stc->nsyms);
-	stroff = swap32(f->is_swapped, f->stc->stroff);
-	strsize = swap32(f->is_swapped, f->stc->strsize);
+	symoff = swap32(f, f->stc->symoff);
+	nsyms = swap32(f, f->stc->nsyms);
+	stroff = swap32(f, f->stc->stroff);
+	strsize = swap32(f, f->stc->strsize);
 	symsize = sizeof_nlist(f);
 	i = 0;
 
 	while (i < nsyms)
 	{
 		nlist = (struct nlist *)&f->map[symoff + i * symsize];
-		n_strx = swap32(f->is_swapped, nlist->n_un.n_strx);
+		n_strx = swap32(f, nlist->n_un.n_strx);
 		symname = (char *)&f->map[stroff + n_strx];
 
 		if ((n_strx != 0) && (*symname != 0))
@@ -278,14 +117,14 @@ int	nm_symtab(t_machof *f)
 
 		uint8_t type = nlist->n_type;
 		uint8_t sect = nlist->n_sect;
-		uint16_t desc = swap16(f->is_swapped, nlist->n_desc);
+		uint16_t desc = swap16(f, nlist->n_desc);
 		uint64_t value;
 		void	*section;
 
 		if (f->is_64bit)
-			value = swap64(f->is_swapped, nlist->n_value);
+			value = swap64(f, nlist->n_value);
 		else
-			value = swap32(f->is_swapped, nlist->n_value);
+			value = swap32(f, nlist->n_value);
 
 		if (sect != 0)
 		{
@@ -294,9 +133,9 @@ int	nm_symtab(t_machof *f)
 			uint64_t valueX;
 
 			if (f->is_64bit)
-				valueX = swap64(f->is_swapped, ((struct segment_command_64 *)section)->vmaddr );
+				valueX = swap64(f, ((struct segment_command_64 *)section)->vmaddr );
 			else
-				valueX = swap32(f->is_swapped, ((struct segment_command *) section)->vmaddr);
+				valueX = swap32(f, ((struct segment_command *) section)->vmaddr);
 			ft_printf("valueX = %016llx, ", valueX);
 
 		}
@@ -336,13 +175,13 @@ int	validate_macho(t_machof *f)
 	if (!is_valid_magic(f->map, &f->is_64bit, &f->is_swapped))
 		return (msgerr(E_BADMAGIC_ERR, f->fn));
 	f->mh = (struct mach_header *)f->map;
-	f->ncmds = swap32(f->is_swapped, f->mh->ncmds);
+	f->ncmds = swap32(f, f->mh->ncmds);
 	offset = sizeof_mach_header(f);
 	i = 0;
 	while ((i < f->ncmds) && (offset < f->st.st_size))
 	{
 		lc = (struct load_command *)&f->map[offset];
-		offset += swap32(f->is_swapped, lc->cmdsize);
+		offset += swap32(f, lc->cmdsize);
 		i++;
 	}
 	if (offset > f->st.st_size)
