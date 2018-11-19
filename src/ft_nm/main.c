@@ -6,7 +6,7 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/16 01:02:15 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/19 09:08:49 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/19 10:11:01 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -171,7 +171,7 @@ t_nlist	**populate_symptr_array(t_machof *f, t_stc *stc, t_nlist **array)
 	return (array);
 }
 
-uint32_t	count_symbols_to_display(t_machof *f, struct symtab_command *stc)
+uint32_t	count_symbols_to_display(t_machof *f, t_stc *stc)
 {
 	uint32_t		i;
 	uint32_t		count;
@@ -192,8 +192,124 @@ uint32_t	count_symbols_to_display(t_machof *f, struct symtab_command *stc)
 }
 
 
+int		compare_symbol_names(t_machof *f, t_stc *stc, t_nlist *a, t_nlist *b)
+{
+	uint32_t	stroff;
+	uint32_t	n_strx;
+	char		*a_name;
+	char		*b_name;
 
-struct nlist	**make_symbol_ptr_array(t_machof *f, t_stc *stc)
+	stroff = swap32(f, stc->stroff);
+	n_strx = swap32(f, a->n_un.n_strx);
+	a_name = (char *)&f->map[stroff + n_strx];
+	n_strx = swap32(f, b->n_un.n_strx);
+	b_name = (char *)&f->map[stroff + n_strx];
+	return (ft_strcmp(a_name, b_name));
+}
+
+/*
+** https://en.wikipedia.org/wiki/Bubble_sort
+*/
+
+t_nlist	**sort_symptr_array(t_machof *f, t_stc *stc, t_nlist **a, uint32_t n)
+{
+	uint32_t	i;
+	int			swapped;
+	t_nlist		*tmp;
+
+	while (1)
+	{
+		swapped = 0;
+		i = 1;
+		while (i <= n - 1)
+		{
+			if (compare_symbol_names(f, stc, a[i - 1], a[i]) > 0)
+			{
+				tmp = a[i - 1];
+				a[i - 1] = a[i];
+				a[i] = tmp;
+				swapped = 1;
+			}
+			i++;
+		}
+		if (!swapped)
+			break ;
+	}
+	return (a);
+}
+
+
+
+uint64_t	nlist_n_value(t_machof *f, t_nlist *nlist)
+{
+	uint64_t	value;
+
+	if (f->is_64bit)
+		value = swap64(f, nlist->n_value);
+	else
+		value = swap32(f, nlist->n_value);
+	return (value);
+}
+
+uint64_t	segment_vmaddr(t_machof *f, void *seg)
+{
+	uint64_t	res;
+
+	if (f->is_64bit)
+		res = swap64(f, ((struct segment_command_64 *)seg)->vmaddr);
+	else
+		res = swap32(f, ((struct segment_command *) seg)->vmaddr);
+	return (res);
+}
+
+
+void	print_symbol(t_machof *f, uint64_t addr, char sym, char *name)
+{
+	if (f->is_64bit)
+	{
+		if (addr != 0)
+			ft_printf("%016llx %c %s\n", addr, sym, name);
+		else
+			ft_printf("%16s %c %s\n", "", sym, name);
+	}
+	else
+	{
+		if (addr != 0)
+			ft_printf("%08x %c %s\n", addr, sym, name);
+		else
+			ft_printf("%8s %c %s\n", "", sym, name);
+	}
+}
+
+void	print_symptr_array(t_machof *f, t_stc *stc, t_nlist **a, uint32_t n)
+{
+	uint32_t	i;
+	uint32_t	n_strx;
+	uint32_t	stroff;
+	char		*symname;
+	uint64_t	symaddr;
+	char		symchar;
+
+	stroff = swap32(f, stc->stroff);
+	i = 0;
+	while (i < n)
+	{
+		n_strx = swap32(f, a[i]->n_un.n_strx);
+		symname = (char *)&f->map[stroff + n_strx];
+		symaddr = nlist_n_value(f, a[i]);
+		symchar = 'U';
+		if (a[i]->n_sect != 0)
+		{
+			void *seg = get_segment_by_sect_number(f, a[i]->n_sect);
+			symaddr += segment_vmaddr(f, seg);
+			symchar = get_character_for_symbol(f, a[i]->n_sect);
+		}
+		print_symbol(f, symaddr, symchar, symname);
+		i++;
+	}
+}
+
+void	nm_print(t_machof *f, t_stc *stc)
 {
 	uint32_t		count;
 	struct nlist	**array;
@@ -201,9 +317,10 @@ struct nlist	**make_symbol_ptr_array(t_machof *f, t_stc *stc)
 	count = count_symbols_to_display(f, stc);
 	array = ft_memalloc((count + 1) * sizeof_nlist(f));
 	array = populate_symptr_array(f, stc, array);
-
-	return (array);
-
+	array = sort_symptr_array(f, stc, array, count);
+	(void)print_symptr_array(f, stc, array, count);
+	free(array);
+	return ;
 }
 
 int	nm_symtab(t_machof *f)
@@ -347,7 +464,8 @@ int	nm(t_machof *f)
 	{
 		stc = (struct symtab_command *)lcmd;
 		f->stc = stc;
-		(void)nm_symtab(f);
+//		(void)nm_symtab(f);
+		(void)nm_print(f, stc);
 
 	}
 
