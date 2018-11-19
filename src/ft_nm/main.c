@@ -6,12 +6,12 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/16 01:02:15 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/18 11:42:37 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/19 09:08:49 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "nm.h"
-#define debug	1
+#define debug	0
 
 
 //
@@ -85,8 +85,132 @@ void	debug1(t_machof *f)
 	ft_printf("strsize = %08x\n", swap32(f, f->stc->strsize));
 }
 
+/*
+** logic: the nlist structure has the 'n_sect' member,
+** which is section number where symbol lives
+**
+*/
+
+
+
+
+char	get_character_for_symbol(t_machof *f, uint8_t n_sect)
+{
+	void	*sect;
+	char	*sectname;
+	char	*segname;
+
+	sect = get_section_by_number(f, n_sect);
+	if (sect != NULL)
+	{
+		sectname = ((struct section *) sect)->sectname;
+		segname = ((struct section *) sect)->segname;
+		if ((ft_strcmp(segname, SEG_TEXT) == 0) &&		//SEG_TEXT
+				(ft_strcmp(sectname, SECT_TEXT) == 0))	//SECT_TEXT
+			return ('T');
+		if ((ft_strcmp(segname, SEG_DATA) == 0) &&		//SEG_DATA
+				(ft_strcmp(sectname, SECT_DATA) == 0))	//SECT_DATA
+			return ('D');
+		if ((ft_strcmp(segname, SEG_DATA) == 0) &&		//SEG_DATA
+				(ft_strcmp(sectname, SECT_BSS) == 0))	//SECT_BSS
+			return ('B');
+		if ((ft_strcmp(segname, SEG_DATA) == 0) &&		//SEG_DATA
+				(ft_strcmp(sectname, SECT_COMMON) == 0))//SECT_COMMON
+			return ('C');
+	}
+	return ('S');
+}
+
+
+/*
+typedef struct s_stc
+{
+	t_machof				*f;
+	struct symtab_command	*stc;
+	uint32_t				symoff;
+	uint32_t				nsyms;
+	struct nlist			*nlist;
+}				t_stc;
+
+
+void		populate_stc_struct(t_machof *f, struct symtab_command *stc)
+{
+
+}
+*/
+
+
+typedef struct symtab_command	t_stc;
+typedef struct nlist			t_nlist;
+
+
+/*
+** copied count_symbols_to_display()
+*/
+
+t_nlist	**populate_symptr_array(t_machof *f, t_stc *stc, t_nlist **array)
+{
+	uint32_t		i;
+	uint32_t		j;
+	uint32_t		symoff;
+	struct nlist	*nlist;
+
+	symoff = swap32(f, stc->symoff);
+	i = 0;
+	j = 0;
+	while (i < swap32(f, stc->nsyms))
+	{
+		nlist = (struct nlist *)&f->map[symoff + i * sizeof_nlist(f)];
+		if (!(nlist->n_type & N_STAB))
+		{
+			array[j++] = nlist;
+		}
+		i++;
+	}
+	array[j] = NULL;
+	return (array);
+}
+
+uint32_t	count_symbols_to_display(t_machof *f, struct symtab_command *stc)
+{
+	uint32_t		i;
+	uint32_t		count;
+	uint32_t		symoff;
+	struct nlist	*nlist;
+
+	symoff = swap32(f, stc->symoff);
+	i = 0;
+	count = 0;
+	while (i < swap32(f, stc->nsyms))
+	{
+		nlist = (struct nlist *)&f->map[symoff + i * sizeof_nlist(f)];
+		if (!(nlist->n_type & N_STAB))
+			count++;
+		i++;
+	}
+	return (count);
+}
+
+
+
+struct nlist	**make_symbol_ptr_array(t_machof *f, t_stc *stc)
+{
+	uint32_t		count;
+	struct nlist	**array;
+
+	count = count_symbols_to_display(f, stc);
+	array = ft_memalloc((count + 1) * sizeof_nlist(f));
+	array = populate_symptr_array(f, stc, array);
+
+	return (array);
+
+}
+
 int	nm_symtab(t_machof *f)
 {
+
+//	ft_printf("count_symbols_to_display() = %u\n", count_symbols_to_display(f, f->stc));
+
 	if (debug)	debug1(f);
 
 	uint32_t		i;
@@ -112,8 +236,8 @@ int	nm_symtab(t_machof *f)
 		n_strx = swap32(f, nlist->n_un.n_strx);
 		symname = (char *)&f->map[stroff + n_strx];
 
-		if ((n_strx != 0) && (*symname != 0))
-		{
+//		if ((n_strx != 0) && (*symname != 0))
+//		{
 
 		uint8_t type = nlist->n_type;
 		uint8_t sect = nlist->n_sect;
@@ -126,9 +250,14 @@ int	nm_symtab(t_machof *f)
 		else
 			value = swap32(f, nlist->n_value);
 
+
+		char rep = '@';
+
 		if (sect != 0)
 		{
-			section = get_section_by_number(f, sect);
+			rep = get_character_for_symbol(f, sect);
+
+			section = get_segment_by_sect_number(f, sect);
 
 			uint64_t valueX;
 
@@ -136,18 +265,33 @@ int	nm_symtab(t_machof *f)
 				valueX = swap64(f, ((struct segment_command_64 *)section)->vmaddr );
 			else
 				valueX = swap32(f, ((struct segment_command *) section)->vmaddr);
-			ft_printf("valueX = %016llx, ", valueX);
+		//	ft_printf("valueX = %016llx, ", valueX);
+			value += valueX;
 
+		} else {
+			rep = 'U';
 		}
+		
 
+//			if (rep != '$')
+			if (!(type & N_STAB))
+			{
+				if (debug)
+					ft_printf("index = %08x, n_strx = %08x, type = %02hhx, sect = %02hhx, desc = %04hx\n", i, n_strx, type, sect, desc);
+				if (f->is_64bit)
+				{
+					if (value != 0)
+						ft_printf("%016llx %c %s\n", value, rep, symname);
+					else
 
+						ft_printf("%16s %c %s\n", "", rep, symname);
 
-		ft_printf("index = %08x, n_strx = %08x, type = %02hhx, sect = %02hhx, desc = %04hx, ", i, n_strx, type, sect, desc);
-		if (f->is_64bit)
-			ft_printf("value = %016llx, name = %s\n", value, symname);
-		else
-			ft_printf("value = %08x, name = %s\n", value, symname);
-		}
+				}
+				else
+					ft_printf("value = %08x, %c name = %s\n", value, rep, symname);
+			}
+
+//		}
 
 		i++;
 	}

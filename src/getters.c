@@ -6,7 +6,7 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/18 10:11:31 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/18 11:40:31 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/19 07:39:26 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -96,7 +96,20 @@ void	*get_section_by_name_idx(t_machof *f, void *seg, char *sn, uint32_t i)
 	return (NULL);
 }
 
-void	*get_section_by_number(t_machof *f, uint8_t sect)
+uint32_t	load_command_segment(t_machof *f)
+{
+	if (f->is_64bit == 1)
+		return (LC_SEGMENT_64);
+	else
+		return (LC_SEGMENT);
+}
+
+/*
+** this is for getting the vmaddr of a segment
+** which will be added to value in nlist for a symbol
+*/
+
+void	*get_segment_by_sect_number(t_machof *f, uint8_t sect)
 {
 	uint32_t	lctype;
 	void		*segment;
@@ -105,9 +118,7 @@ void	*get_section_by_number(t_machof *f, uint8_t sect)
 	uint32_t	total_sects;
 	
 
-	lctype = LC_SEGMENT_64;
-	if (f->is_64bit == 0)
-		lctype = LC_SEGMENT;
+	lctype = load_command_segment(f);
 	iseg = 0;
 	total_sects = 0;
 	while ((segment = get_lcmd_by_index(f, lctype, iseg++)) != NULL)
@@ -121,5 +132,44 @@ void	*get_section_by_number(t_machof *f, uint8_t sect)
 		}
 	}
 
+	return (NULL);
+}
+
+/*
+** this goes through all sections in the macho
+** finds the segment that contains section #n,
+** then goes to that particular section
+** returns (void *) which is 
+** either (struct section *) or (struct section_64 *)
+** this function is for devising the character that
+** represents the symbol in symtable based on the
+** section number in nload
+*/
+
+void	*get_section_by_number(t_machof *f, uint8_t sect)
+{
+	uint32_t	lctype;
+	void		*segment;
+	uint32_t	iseg;
+	uint32_t	nsects;
+	uint32_t	total_sects;
+	
+	lctype = load_command_segment(f);
+	iseg = 0;
+	total_sects = 0;
+	while ((segment = get_lcmd_by_index(f, lctype, iseg++)) != NULL)
+	{
+		nsects = nsects_in_segment(f, segment);
+		if (nsects > 0)
+		{
+			if ((sect >= total_sects) && (sect <= total_sects + nsects))
+			{
+				segment += sizeof_segment(f);
+				segment += sizeof_section(f) * (sect - total_sects - 1);
+				return (segment);
+			}
+			total_sects += nsects;
+		}
+	}
 	return (NULL);
 }
