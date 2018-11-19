@@ -6,7 +6,7 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/16 01:02:15 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/19 10:11:01 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/19 11:23:42 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -114,9 +114,9 @@ char	get_character_for_symbol(t_machof *f, uint8_t n_sect)
 		if ((ft_strcmp(segname, SEG_DATA) == 0) &&		//SEG_DATA
 				(ft_strcmp(sectname, SECT_BSS) == 0))	//SECT_BSS
 			return ('B');
-		if ((ft_strcmp(segname, SEG_DATA) == 0) &&		//SEG_DATA
-				(ft_strcmp(sectname, SECT_COMMON) == 0))//SECT_COMMON
-			return ('C');
+//		if ((ft_strcmp(segname, SEG_DATA) == 0) &&		//SEG_DATA
+//				(ft_strcmp(sectname, SECT_COMMON) == 0))//SECT_COMMON
+//			return ('C');
 	}
 	return ('S');
 }
@@ -262,6 +262,46 @@ uint64_t	segment_vmaddr(t_machof *f, void *seg)
 	return (res);
 }
 
+uint64_t	segment_fileoff(t_machof *f, void *seg)
+{
+	uint64_t	res;
+
+	if (f->is_64bit)
+		res = swap64(f, ((struct segment_command_64 *)seg)->fileoff);
+	else
+		res = swap32(f, ((struct segment_command *) seg)->fileoff);
+	return (res);
+}
+
+/*
+uint64_t	section_addr(t_machof *f, void *sect)
+{
+	uint64_t	res;
+
+	if (f->is_64bit)
+		res = swap64(f, ((struct section_64 *)sect)->addr);
+	else
+		res = swap32(f, ((struct section *) sect)->addr);
+	ft_printf("section address = %016llx\n", res);
+	return (res);
+}
+*/
+/*
+** offset in section_64 is a uint32_t !!!
+*/
+/*
+uint64_t	section_offset(t_machof *f, void *sect)
+{
+	uint64_t	res;
+
+	if (f->is_64bit)
+		res = swap32(f, ((struct section_64 *)sect)->offset);
+	else
+		res = swap32(f, ((struct section *) sect)->offset);
+	ft_printf("section offset = %016llx\n", res);
+	return (res);
+}
+*/
 
 void	print_symbol(t_machof *f, uint64_t addr, char sym, char *name)
 {
@@ -289,6 +329,7 @@ void	print_symptr_array(t_machof *f, t_stc *stc, t_nlist **a, uint32_t n)
 	char		*symname;
 	uint64_t	symaddr;
 	char		symchar;
+	void		*seg;
 
 	stroff = swap32(f, stc->stroff);
 	i = 0;
@@ -300,8 +341,9 @@ void	print_symptr_array(t_machof *f, t_stc *stc, t_nlist **a, uint32_t n)
 		symchar = 'U';
 		if (a[i]->n_sect != 0)
 		{
-			void *seg = get_segment_by_sect_number(f, a[i]->n_sect);
+			seg = get_segment_by_sect_number(f, a[i]->n_sect);
 			symaddr += segment_vmaddr(f, seg);
+			symaddr -= segment_fileoff(f, seg);
 			symchar = get_character_for_symbol(f, a[i]->n_sect);
 		}
 		print_symbol(f, symaddr, symchar, symname);
@@ -323,6 +365,8 @@ void	nm_print(t_machof *f, t_stc *stc)
 	return ;
 }
 
+
+/*
 int	nm_symtab(t_machof *f)
 {
 
@@ -416,7 +460,7 @@ int	nm_symtab(t_machof *f)
 
 	return (0);
 }
-
+*/
 
 
 /*
