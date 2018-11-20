@@ -6,7 +6,7 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/17 02:19:41 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/19 07:39:38 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/19 18:01:47 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,10 @@
 #define E_BADOFFSET_ERR	"invalid values in header"
 
 
-typedef struct load_command t_lc;
+typedef struct load_command		t_lc;
+typedef struct symtab_command	t_stc;
+typedef struct nlist			t_nlist;
+
 
 typedef	struct				s_machof
 {
@@ -60,6 +63,9 @@ uint32_t	sizeof_mach_header(t_machof *f);
 uint32_t	sizeof_nlist(t_machof *f);
 uint32_t	sizeof_section(t_machof *f);
 uint32_t	sizeof_segment(t_machof *f);
+uint64_t	nlist_n_value(t_machof *f, t_nlist *nlist);
+uint64_t	segment_fileoff(t_machof *f, void *seg);
+uint64_t	segment_vmaddr(t_machof *f, void *seg);
 t_lc		*get_lcmd_by_index(t_machof *f, uint32_t cmd, uint32_t idx);
 void		*get_section_by_name_idx(t_machof *f, void *seg, char *sn, uint32_t i);
 void		*get_segment_by_sect_number(t_machof *f, uint8_t sect);

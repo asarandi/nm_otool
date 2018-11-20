@@ -19,3 +19,10 @@ https://github.com/JonathanSalwan/binary-samples
 https://lowlevelbits.org/parsing-mach-o-files/
 https://www.objc.io/issues/6-build-tools/mach-o-executables/
 https://samhuri.net/posts/2010/01/basics-of-the-mach-o-file-format
+
+
+
+---
+
+gotta implement support for .a (ar) format
+gotta implement support for (fat) universal binaries
