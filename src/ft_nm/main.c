@@ -6,7 +6,7 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/16 01:02:15 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/19 18:19:57 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/19 22:07:24 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -131,19 +131,35 @@ t_nlist	**sort_symptr_array(t_machof *f, t_stc *stc, t_nlist **a, uint32_t n)
 	return (a);
 }
 //--------------------------------------------------------------------------------------
+
+int		print_address_for_symtype(char c)
+{
+	if ((c == 'U') || (c == 'u'))
+		return (0);
+	if ((c == 'I') || (c == 'i'))
+		return (0);
+	return (1);
+}
+
 void	print_symbol(t_machof *f, uint64_t addr, char sym, char *name)
 {
 	if (f->is_64bit)
 	{
-		if (addr != 0)
+//		if ((addr != 0) || ((sym == 'T') || (sym == 't')))
+
+		if (print_address_for_symtype(sym) == 1)
 			ft_printf("%016llx %c %s\n", addr, sym, name);
 		else
 			ft_printf("%16s %c %s\n", "", sym, name);
 	}
 	else
 	{
-		if (addr != 0)
-			ft_printf("%08lx %c %s\n", addr, sym, name);
+//		if ((addr != 0) || ((sym == 'T') || (sym == 't')))
+		if (print_address_for_symtype(sym) == 1)
+		{
+			addr &= 0xffffffff;
+			ft_printf("%08llx %c %s\n", addr, sym, name);
+		}
 		else
 			ft_printf("%8s %c %s\n", "", sym, name);
 	}
@@ -182,26 +198,37 @@ char	*get_symname_from_nlist(t_machof *f, t_stc *stc, t_nlist *sym)
 	return (symname);
 }
 
+uint64_t	get_symaddr_from_nlist(t_machof *f, t_nlist *sym)
+{
+	uint64_t	symaddr;
+	void		*seg;
+
+	symaddr = nlist_n_value(f, sym);
+	if (((sym->n_type & N_TYPE) & N_SECT) && (f->is_64bit == 1))
+	{
+		seg = get_segment_by_sect_number(f, sym->n_sect);
+		if (segment_vmaddr(f, seg) != 0)
+		{
+			symaddr += segment_vmaddr(f, seg);
+			symaddr -= segment_fileoff(f, seg);
+		}
+	}
+	return (symaddr);
+}
+
 void	print_symptr_array(t_machof *f, t_stc *stc, t_nlist **a, uint32_t n)
 {
 	uint32_t	i;
 	char		*symname;
 	uint64_t	symaddr;
 	char		symchar;
-	void		*seg;
 
 	i = 0;
 	while (i < n)
 	{
 		symname = get_symname_from_nlist(f, stc, a[i]);
 		symchar = get_symchar_from_ntype(f, a[i]);
-		symaddr = nlist_n_value(f, a[i]);
-		if (((a[i]->n_type & N_TYPE) & N_SECT) && (f->is_64bit == 1))
-		{
-			seg = get_segment_by_sect_number(f, a[i]->n_sect);
-			symaddr += segment_vmaddr(f, seg);
-			symaddr -= segment_fileoff(f, seg);
-		}
+		symaddr = get_symaddr_from_nlist(f, a[i]);
 		print_symbol(f, symaddr, symchar, symname);
 		i++;
 	}

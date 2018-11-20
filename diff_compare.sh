@@ -2,7 +2,7 @@
 
 wildcard='/bin/*'
 #wildcard='testers/*'
-outputf='DIFFYDIR/'
+outputf='DiffyDiff/'
 
 prog1='./ft_nm '
 ext1='.alex'
@@ -20,6 +20,7 @@ nc='\033[0m'
 bad="$red hashes are not the same $nc"
 good="$green hashes are the same $nc"
 
+rm -rf $outputf
 mkdir -p $outputf
 
 for f0 in $wildcard; do
