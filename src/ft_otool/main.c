@@ -6,7 +6,7 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/16 01:02:57 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/18 11:44:13 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/21 12:20:11 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,7 +73,7 @@ int	ft_otool_print_section(t_machof *f, void *seg, void *sect)
 			else
 				ft_printf("\n%08x\t", addr + i);
 		}
-		b = ((unsigned char *)f->map)[offset+i];
+		b = ((unsigned char *)f->single)[offset+i];
 		(void)otool_print_byte(b);
 //		ft_printf("%02hhx ", b);
 		i++;
@@ -89,15 +89,15 @@ int	validate_macho(t_machof *f)
 	struct load_command	*lc;
 
 
-	if (!is_valid_magic(f->map, &f->is_64bit, &f->is_swapped))
+	if (!is_valid_magic(f->single, &f->is_64bit, &f->is_swapped))
 		return (msgerr(E_BADMAGIC_ERR, f->fn));
-	f->mh = (struct mach_header *)f->map;
+	f->mh = (struct mach_header *)f->single;
 	f->ncmds = swap32(f, f->mh->ncmds);
 	offset = sizeof_mach_header(f);
 	i = 0;
 	while ((i < f->ncmds) && (offset < f->st.st_size))
 	{
-		lc = (struct load_command *)&f->map[offset];
+		lc = (struct load_command *)&f->single[offset];
 		offset += swap32(f, lc->cmdsize);
 		i++;
 	}
@@ -138,11 +138,12 @@ int	process_file(t_machof *f)
 		return (fclose_msgerr(f->fd, E_FILE_EMPTY, f->fn));
 	if (!(f->st.st_mode & S_IFREG))
 		return (fclose_msgerr(f->fd, E_FNOTREG_ERR, f->fn));
-	f->map = mmap(0, f->st.st_size, PROT_READ, MAP_SHARED, f->fd, 0);
-	if (f->map == MAP_FAILED)
+	f->multi = mmap(0, f->st.st_size, PROT_READ, MAP_SHARED, f->fd, 0);
+	if (f->multi == MAP_FAILED)
 		return (fclose_msgerr(f->fd, E_MMAP_ERR, f->fn));
+	f->single = f->multi;	/* XXX */
 	(void)otool_find(f, "__TEXT", "__text");
-	if (munmap(f->map, f->st.st_size) == -1)
+	if (munmap(f->multi, f->st.st_size) == -1)
 		return (fclose_msgerr(f->fd, E_MUNMAP_ERR, f->fn));
 	(void)close(f->fd);
 	return (0);

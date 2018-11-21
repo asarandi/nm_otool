@@ -6,7 +6,7 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/17 02:19:41 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/19 18:01:47 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/21 13:06:36 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,7 @@
 #include <sys/mman.h>
 #include <mach-o/loader.h>
 #include <mach-o/nlist.h>
+#include <mach-o/fat.h>
 
 #define E_OPEN_ERR		"open() failed"
 #define E_FSTAT_ERR		"fstat() failed"
@@ -31,6 +32,7 @@
 #define E_BADMAGIC_ERR	"not a valid mach-o file"
 #define E_FNOTREG_ERR	"not a regular file"
 #define E_BADOFFSET_ERR	"invalid values in header"
+#define E_UNKNOWNF_ERR	"unknown file type"
 
 
 typedef struct load_command		t_lc;
@@ -43,7 +45,8 @@ typedef	struct				s_machof
 	char					*fn;
 	int						fd;
 	struct stat				st;
-	void					*map;
+	void					*multi;
+	void					*single;
 	int						is_64bit;
 	int						is_swapped;
 	struct mach_header		*mh;

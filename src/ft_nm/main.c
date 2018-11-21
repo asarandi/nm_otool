@@ -6,7 +6,7 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/16 01:02:15 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/19 22:07:24 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/21 13:07:05 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,7 +48,7 @@ t_nlist	**populate_symptr_array(t_machof *f, t_stc *stc, t_nlist **array)
 	j = 0;
 	while (i < swap32(f, stc->nsyms))
 	{
-		nlist = (struct nlist *)&f->map[symoff + i * sizeof_nlist(f)];
+		nlist = (struct nlist *)&f->single[symoff + i * sizeof_nlist(f)];
 		if (!(nlist->n_type & N_STAB))
 		{
 			array[j++] = nlist;
@@ -71,7 +71,7 @@ uint32_t	count_symbols_to_display(t_machof *f, t_stc *stc)
 	count = 0;
 	while (i < swap32(f, stc->nsyms))
 	{
-		nlist = (struct nlist *)&f->map[symoff + i * sizeof_nlist(f)];
+		nlist = (struct nlist *)&f->single[symoff + i * sizeof_nlist(f)];
 		if (!(nlist->n_type & N_STAB))
 			count++;
 		i++;
@@ -90,9 +90,9 @@ int		compare_symbols(t_machof *f, t_stc *stc, t_nlist *a, t_nlist *b)
 
 	stroff = swap32(f, stc->stroff);
 	n_strx = swap32(f, a->n_un.n_strx);
-	a_name = (char *)&f->map[stroff + n_strx];
+	a_name = (char *)&f->single[stroff + n_strx];
 	n_strx = swap32(f, b->n_un.n_strx);
-	b_name = (char *)&f->map[stroff + n_strx];
+	b_name = (char *)&f->single[stroff + n_strx];
 	res = ft_strcmp(a_name, b_name);
 	if (!res)
 		res = (int)(nlist_n_value(f, a) - nlist_n_value(f, b));
@@ -132,7 +132,7 @@ t_nlist	**sort_symptr_array(t_machof *f, t_stc *stc, t_nlist **a, uint32_t n)
 }
 //--------------------------------------------------------------------------------------
 
-int		print_address_for_symtype(char c)
+int		print_address_for_symbol(char c)
 {
 	if ((c == 'U') || (c == 'u'))
 		return (0);
@@ -145,21 +145,15 @@ void	print_symbol(t_machof *f, uint64_t addr, char sym, char *name)
 {
 	if (f->is_64bit)
 	{
-//		if ((addr != 0) || ((sym == 'T') || (sym == 't')))
-
-		if (print_address_for_symtype(sym) == 1)
+		if (print_address_for_symbol(sym) == 1)
 			ft_printf("%016llx %c %s\n", addr, sym, name);
 		else
 			ft_printf("%16s %c %s\n", "", sym, name);
 	}
 	else
 	{
-//		if ((addr != 0) || ((sym == 'T') || (sym == 't')))
-		if (print_address_for_symtype(sym) == 1)
-		{
-			addr &= 0xffffffff;
-			ft_printf("%08llx %c %s\n", addr, sym, name);
-		}
+		if (print_address_for_symbol(sym) == 1)
+			ft_printf("%08llx %c %s\n", addr & 0xffffffff, sym, name);
 		else
 			ft_printf("%8s %c %s\n", "", sym, name);
 	}
@@ -194,7 +188,7 @@ char	*get_symname_from_nlist(t_machof *f, t_stc *stc, t_nlist *sym)
 
 	stroff = swap32(f, stc->stroff);
 	n_strx = swap32(f, sym->n_un.n_strx);
-	symname = (char *)&f->map[stroff + n_strx];
+	symname = (char *)&f->single[stroff + n_strx];
 	return (symname);
 }
 
@@ -263,15 +257,15 @@ int	validate_macho(t_machof *f)
 	struct load_command	*lc;
 
 
-	if (!is_valid_magic(f->map, &f->is_64bit, &f->is_swapped))
+	if (!is_valid_magic(f->single, &f->is_64bit, &f->is_swapped))
 		return (msgerr(E_BADMAGIC_ERR, f->fn));
-	f->mh = (struct mach_header *)f->map;
+	f->mh = (struct mach_header *)f->single;
 	f->ncmds = swap32(f, f->mh->ncmds);
 	offset = sizeof_mach_header(f);
 	i = 0;
 	while ((i < f->ncmds) && (offset < f->st.st_size))
 	{
-		lc = (struct load_command *)&f->map[offset];
+		lc = (struct load_command *)&f->single[offset];
 		offset += swap32(f, lc->cmdsize);
 		i++;
 	}
@@ -301,6 +295,55 @@ int	nm(t_machof *f)
 	return (0);
 }
 
+int	is_macho_file(void *data)
+{
+	uint32_t	magic;
+	magic = ((struct mach_header *)data)->magic;
+	if ((magic == MH_MAGIC) || (magic == MG_CIGAM))
+		return (1);
+	else if ((magic == MH_MAGIC_64) || (magic == MG_CIGAM_64))
+		return (1);
+	return (0);
+}
+
+int	is_fat_file(void *data)
+{
+	uint32_t	magic;
+
+	magic = ((struct fat_header *)data)->magic;
+	if ((magic == FAT_MAGIC) || (magic == FAT_CIGAM))
+		return (1);
+	else if ((magic == FAT_MAGIC_64) || (magic == FAT_CIGAM_64))
+		return (1);
+	return (0);
+}
+
+
+#define ARCHIVE_MAGIC "!<arch>\n"
+int	is_archive_file(void *data)
+{
+	if (ft_strcmp(ARCHIVE_MAGIC, (char *)data) == 0)
+		return (1);
+	return (0);
+}
+
+int	file_loader(t_machof *f)
+{
+	if (is_macho_file(f->multi))
+		return (process_macho(f->multi));
+	else if (is_fat_file(f->multi))
+		return (process_fat_file(f->multi));
+	else if (is_archive_file(f->multi))
+		return (process_archive_file(f->multi));
+	else
+		return 
+
+
+
+
+
+}
+
 int	process_file(t_machof *f)
 {
 	if ((f->fd = open(f->fn, O_RDONLY)) == -1)
@@ -311,11 +354,12 @@ int	process_file(t_machof *f)
 		return (fclose_msgerr(f->fd, E_FILE_EMPTY, f->fn));
 	if (!(f->st.st_mode & S_IFREG))
 		return (fclose_msgerr(f->fd, E_FNOTREG_ERR, f->fn));
-	f->map = mmap(0, f->st.st_size, PROT_READ, MAP_SHARED, f->fd, 0);
-	if (f->map == MAP_FAILED)
+	f->multi = mmap(0, f->st.st_size, PROT_READ, MAP_SHARED, f->fd, 0);
+	if (f->multi == MAP_FAILED)
 		return (fclose_msgerr(f->fd, E_MMAP_ERR, f->fn));
+	f->single = f->multi;
 	(void)nm(f);
-	if (munmap(f->map, f->st.st_size) == -1)
+	if (munmap(f->multi, f->st.st_size) == -1)
 		return (fclose_msgerr(f->fd, E_MUNMAP_ERR, f->fn));
 	(void)close(f->fd);
 	return (0);

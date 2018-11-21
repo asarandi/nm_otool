@@ -6,17 +6,17 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/18 03:06:51 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/18 03:07:08 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/21 12:16:48 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "common.h"
 
-int	is_valid_magic(void *map, int *is_64bit, int *is_swapped)
+int	is_valid_magic(void *single, int *is_64bit, int *is_swapped)
 {
 	struct mach_header	*mh;
 
-	mh = (struct mach_header *)map;
+	mh = (struct mach_header *)single;
 	if ((mh->magic == MH_MAGIC_64) || (mh->magic == MH_CIGAM_64))
 	{
 		*is_64bit = 1;

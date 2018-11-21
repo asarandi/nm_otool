@@ -6,7 +6,7 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/18 10:11:31 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/19 07:39:26 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/21 12:17:12 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,7 @@ t_lc	*get_lcmd_by_index(t_machof *f, uint32_t cmd, uint32_t idx)
 	offset = sizeof_mach_header(f);
 	while (i < f->ncmds)
 	{
-		lcmd = (struct load_command *)&f->map[offset];
+		lcmd = (struct load_command *)&f->single[offset];
 		if (swap32(f, lcmd->cmd) == cmd)
 		{
 			if (counter == idx)
