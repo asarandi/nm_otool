@@ -299,9 +299,9 @@ int	is_macho_file(void *data)
 {
 	uint32_t	magic;
 	magic = ((struct mach_header *)data)->magic;
-	if ((magic == MH_MAGIC) || (magic == MG_CIGAM))
+	if ((magic == MH_MAGIC) || (magic == MH_CIGAM))
 		return (1);
-	else if ((magic == MH_MAGIC_64) || (magic == MG_CIGAM_64))
+	else if ((magic == MH_MAGIC_64) || (magic == MH_CIGAM_64))
 		return (1);
 	return (0);
 }
@@ -319,7 +319,6 @@ int	is_fat_file(void *data)
 }
 
 
-#define ARCHIVE_MAGIC "!<arch>\n"
 int	is_archive_file(void *data)
 {
 	if (ft_strcmp(ARCHIVE_MAGIC, (char *)data) == 0)
@@ -327,21 +326,35 @@ int	is_archive_file(void *data)
 	return (0);
 }
 
+
+
+/*
+** pick file to process
+*/
+
+uint32_t	fat_nfat_arch(void *data)
+{
+	int swapped;
+
+	swapped = 0;	
+
+}
+
+int	process_fat_file(t_machof *f)
+{
+	
+
+}
+
 int	file_loader(t_machof *f)
 {
 	if (is_macho_file(f->multi))
-		return (process_macho(f->multi));
+		return (process_macho(f));
 	else if (is_fat_file(f->multi))
-		return (process_fat_file(f->multi));
+		return (process_fat_file(f));
 	else if (is_archive_file(f->multi))
-		return (process_archive_file(f->multi));
-	else
-		return 
-
-
-
-
-
+		return (process_archive_file(f));
+	return (fclose_msgerr(f->fd, E_BADFTYPE_ERR, f->fn));
 }
 
 int	process_file(t_machof *f)

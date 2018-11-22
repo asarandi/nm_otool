@@ -27,12 +27,33 @@
 #define E_OPEN_ERR		"open() failed"
 #define E_FSTAT_ERR		"fstat() failed"
 #define E_MMAP_ERR		"mmap() failed"
-#define E_MUNMAP_ERR	"munmap() failed"
-#define E_FILE_EMPTY	"file is empty"
-#define E_BADMAGIC_ERR	"not a valid mach-o file"
-#define E_FNOTREG_ERR	"not a regular file"
-#define E_BADOFFSET_ERR	"invalid values in header"
-#define E_UNKNOWNF_ERR	"unknown file type"
+#define E_MUNMAP_ERR		"munmap() failed"
+#define E_FILE_EMPTY		"file is empty"
+#define E_BADMAGIC_ERR		"not a valid mach-o file"
+#define E_FNOTREG_ERR		"not a regular file"
+#define E_BADOFFSET_ERR		"invalid values in header"
+#define E_BADFTYPE_ERR		"unsupported file type"
+#define ARCHIVE_MAGIC 		"!<arch>\n"
+
+
+
+#ifndef FAT_MAGIC_64
+# define FAT_MAGIC_64  0xcafebabf
+
+struct fat_arch_64 {
+	cpu_type_t	cputype;	/* cpu specifier (int) */
+	cpu_subtype_t	cpusubtype;	/* machine specifier (int) */
+	uint64_t	offset;		/* file offset to this object file */
+	uint64_t	size;		/* size of this object file */
+	uint32_t	align;		/* alignment as a power of 2 */
+	uint32_t	reserved;	/* reserved */
+};
+
+#endif
+
+#ifndef FAT_CIGAM_64
+# define FAT_CIGAM_64  0xbfbafeca
+#endif
 
 
 typedef struct load_command		t_lc;
