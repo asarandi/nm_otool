@@ -6,7 +6,7 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/16 01:02:15 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/22 01:24:32 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/22 03:50:26 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -141,22 +141,31 @@ int		print_address_for_symbol(char c)
 	return (1);
 }
 
+
+
+
+
+
+
 void	print_symbol(t_bin *b, uint64_t addr, char sym, char *name)
 {
 	if (b->is_64bit)
 	{
 		if (print_address_for_symbol(sym) == 1)
-			ft_printf("%016llx %c %s\n", addr, sym, name);
+			ft_printf("%016llx %c %s", addr, sym, name);
 		else
-			ft_printf("%16s %c %s\n", "", sym, name);
+			ft_printf("%16s %c %s", "", sym, name);
 	}
 	else
 	{
 		if (print_address_for_symbol(sym) == 1)
-			ft_printf("%08llx %c %s\n", addr & 0xffffffff, sym, name);
+			ft_printf("%08llx %c %s", addr & 0xffffffff, sym, name);
 		else
-			ft_printf("%8s %c %s\n", "", sym, name);
+			ft_printf("%8s %c %s", "", sym, name);
 	}
+	if (sym == 'I')
+		ft_printf(" (indirect for %s)", name);
+	ft_printf("\n");
 }
 
 char	get_symchar_from_ntype(t_bin *b, t_nlist *sym)
@@ -393,23 +402,129 @@ uint32_t	sizeof_fat_arch(t_file *f)
 		return (sizeof(struct fat_arch));
 }
 
+
+int	print_arch_info(t_file *f, void *fat_arch)
+{
+	uint32_t	cputype;	/* XXX integer_t, uint32_t is wrong */
+	uint32_t	cpusubtype;
+	uint64_t	offset;
+	uint64_t	size;
+	uint32_t	align;
+
+	if (f->is_swapped)
+		cputype = swap32u(((struct fat_arch *)fat_arch)->cputype);
+	else
+		cputype = ((struct fat_arch *)fat_arch)->cputype;
+	if (f->is_swapped)
+		cpusubtype = swap32u(((struct fat_arch *)fat_arch)->cpusubtype);
+	else
+		cpusubtype = ((struct fat_arch *)fat_arch)->cpusubtype;
+	if (f->is_fat64)
+	{
+		if (f->is_swapped)
+		{
+			offset = swap64u(((struct fat_arch_64 *)fat_arch)->offset);
+			size   = swap64u(((struct fat_arch_64 *)fat_arch)->size);
+			align  = swap32u(((struct fat_arch_64 *)fat_arch)->align);
+		}
+		else
+		{
+			offset = ((struct fat_arch_64 *)fat_arch)->offset;
+			size   = ((struct fat_arch_64 *)fat_arch)->size;
+			align  = ((struct fat_arch_64 *)fat_arch)->align;
+		}
+	}
+	else
+	{
+		if (f->is_swapped)
+		{
+			offset = swap32u(((struct fat_arch *)fat_arch)->offset);
+			size   = swap32u(((struct fat_arch *)fat_arch)->size);
+			align  = swap32u(((struct fat_arch *)fat_arch)->align);
+		}
+		else
+		{
+			offset = ((struct fat_arch *)fat_arch)->offset;
+			size   = ((struct fat_arch *)fat_arch)->size;
+			align  = ((struct fat_arch *)fat_arch)->align;
+		}
+	}
+	ft_printf("ARCH: cputype = %08x, cpusubtype = %08x, offset = %016llx, size = %016llx, align = %08x\n",
+			cputype, cpusubtype, offset, size, align);
+	return (0);
+}
+
+
+//bin/sync:       Mach-O universal binary with 2 architectures: [x86_64:Mach-O 64-bit executable x86_64] [i386:Mach-O executable i386]
+//ARCH: cputype = 01000007, cpusubtype = 80000003, offset = 0000000000001000, size = 00000000000045b0, align = 0000000c
+
+
+
+uint32_t	fat_arch_cputype(t_file *f, void *fat_arch)
+{
+	if (f->is_swapped)
+		return (swap32u(((struct fat_arch *)fat_arch)->cputype));
+	else
+		return (((struct fat_arch *)fat_arch)->cputype);
+}
+
+uint32_t	fat_arch_cpusubtype(t_file *f, void *fat_arch)
+{
+	if (f->is_swapped)
+		return (swap32u(((struct fat_arch *)fat_arch)->cpusubtype));
+	else
+		return (((struct fat_arch *)fat_arch)->cpusubtype);
+}
+
+
+#define HOST_CPUTYPE		0x01000007
+#define HOST_CPUSUBTYPE		0x80000003
+#define HOST_CPUMASK		0x01000000
+
+int	fat_file_choose_arch(t_file *f)
+{
+	uint32_t	i;
+	uint32_t	second_choice;
+	void		*fat_arch;
+
+	i = 0;
+	second_choice = 0;
+	while (i < file_nfat_arch(f))
+	{
+		fat_arch = &f->map[
+			sizeof(struct fat_header) + (sizeof_fat_arch(f) * i)];
+		if ((fat_arch_cputype(f, fat_arch) == HOST_CPUTYPE) &&
+			(fat_arch_cpusubtype(f, fat_arch) == HOST_CPUSUBTYPE))
+			return (i);
+		if (fat_arch_cputype(f, fat_arch) & HOST_CPUMASK)
+			second_choice = i;
+		i++;
+	}
+	return (second_choice);
+}
+
+
 int	fat_file_loader(t_file *f)
 {
 	t_bin		b;
 	uint32_t	i;
 	void		*fat_arch;
 
-	i = 0;
-	while (i < file_nfat_arch(f))
-	{
-		ft_memset(&b, 0, sizeof(t_bin));
-		fat_arch = &f->map[sizeof(struct fat_header) + (sizeof_fat_arch(f) * i)];
-		b.data = &f->map[fat_arch_offset(f, fat_arch)];
-		b.fsize = fat_arch_size(f, fat_arch);
-		b.fn = NULL;
-		process_macho(&b);
-		i++;
-	}
+//	ft_printf("ARCH: %s\n", f->fn);
+	i = fat_file_choose_arch(f);
+//	while (i < file_nfat_arch(f))
+//	{
+	ft_memset(&b, 0, sizeof(t_bin));
+	fat_arch = &f->map[sizeof(struct fat_header) + (sizeof_fat_arch(f) * i)];
+	b.data = &f->map[fat_arch_offset(f, fat_arch)];
+	b.fsize = fat_arch_size(f, fat_arch);
+	b.fn = NULL;
+//	print_arch_info(f, fat_arch);
+
+	process_macho(&b);
+//		i++;
+//		break ; /* XXX first only */
+//	}
 	//process fat header, go through arch'es
 	//pick binary to display
 	//send to process_macho()
