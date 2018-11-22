@@ -6,7 +6,7 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/17 02:19:41 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/21 20:30:53 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/22 00:54:54 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -89,6 +89,9 @@ int			fclose_msgerr(int fd, char *s1, char *s2);
 int			is_valid_magic(void *map, int *is_64bit, int *is_swapped);
 int			msgerr(char *err, char *fn);
 int			show_usage(char *s1);
+uint16_t	swap16u(uint16_t x);
+uint32_t	swap32u(uint32_t x);
+uint64_t	swap64u(uint64_t x);
 uint16_t	swap16(t_bin *b, uint16_t x);
 uint32_t	swap32(t_bin *b, uint32_t x);
 uint64_t	swap64(t_bin *b, uint64_t x);

@@ -6,7 +6,7 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/16 01:02:15 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/21 20:54:47 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/22 01:24:32 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -340,17 +340,76 @@ int	is_archive_file(t_file *f)
 ** pick file to process
 */
 
-uint32_t	fat_nfat_arch(void *data)
+uint32_t	file_nfat_arch(t_file *f)
 {
-	(void)data;
-//	int swapped;
-//	swapped = 0;
-	return (0);
+	if (f->is_swapped)
+		return (swap32u(((struct fat_header *)f->map)->nfat_arch));
+	else
+		return (((struct fat_header *)f->map)->nfat_arch);
+}
+
+uint64_t	fat_arch_offset(t_file *f, void *header)
+{
+	if (f->is_fat64)
+	{
+		if (f->is_swapped)
+			return (swap64u(((struct fat_arch_64 *)header)->offset));
+		else
+			return (((struct fat_arch_64 *)header)->offset);
+	}
+	else
+	{
+		if (f->is_swapped)
+			return (swap32u(((struct fat_arch *)header)->offset));
+		else
+			return (((struct fat_arch *)header)->offset);
+	}
+}
+
+
+uint64_t	fat_arch_size(t_file *f, void *header)
+{
+	if (f->is_fat64)
+	{
+		if (f->is_swapped)
+			return (swap64u(((struct fat_arch_64 *)header)->size));
+		else
+			return (((struct fat_arch_64 *)header)->size);
+	}
+	else
+	{
+		if (f->is_swapped)
+			return (swap32u(((struct fat_arch *)header)->size));
+		else
+			return (((struct fat_arch *)header)->size);
+	}
+}
+
+uint32_t	sizeof_fat_arch(t_file *f)
+{
+	if (f->is_fat64)
+		return (sizeof(struct fat_arch_64));
+	else
+		return (sizeof(struct fat_arch));
 }
 
 int	fat_file_loader(t_file *f)
 {
-	(void)f;
+	t_bin		b;
+	uint32_t	i;
+	void		*fat_arch;
+
+	i = 0;
+	while (i < file_nfat_arch(f))
+	{
+		ft_memset(&b, 0, sizeof(t_bin));
+		fat_arch = &f->map[sizeof(struct fat_header) + (sizeof_fat_arch(f) * i)];
+		b.data = &f->map[fat_arch_offset(f, fat_arch)];
+		b.fsize = fat_arch_size(f, fat_arch);
+		b.fn = NULL;
+		process_macho(&b);
+		i++;
+	}
 	//process fat header, go through arch'es
 	//pick binary to display
 	//send to process_macho()
