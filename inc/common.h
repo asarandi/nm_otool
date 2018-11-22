@@ -6,7 +6,7 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/17 02:19:41 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/21 13:06:36 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/21 20:30:53 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,41 +60,51 @@ typedef struct load_command		t_lc;
 typedef struct symtab_command	t_stc;
 typedef struct nlist			t_nlist;
 
-
-typedef	struct				s_machof
+typedef	struct				s_bin
 {
 	char					*fn;
-	int						fd;
-	struct stat				st;
-	void					*multi;
-	void					*single;
+	off_t					fsize;
+	void					*data;
 	int						is_64bit;
 	int						is_swapped;
 	struct mach_header		*mh;
 	uint32_t				ncmds;
 	struct symtab_command	*stc;
-}							t_machof;
+}							t_bin;
+
+typedef struct				t_file
+{
+	char					*fn;
+	int						fd;
+	struct stat				st;
+	void					*map;
+	int						is_archive;
+	int						is_fat;
+	int						is_fat64;
+	int						is_swapped;
+}							t_file;
+
 
 int			fclose_msgerr(int fd, char *s1, char *s2);
 int			is_valid_magic(void *map, int *is_64bit, int *is_swapped);
 int			msgerr(char *err, char *fn);
 int			show_usage(char *s1);
-uint16_t	swap16(t_machof *f, uint16_t x);
-uint32_t	swap32(t_machof *f, uint32_t x);
-uint64_t	swap64(t_machof *f, uint64_t x);
-uint32_t	nsects_in_segment(t_machof *f, void *segment);
-uint32_t	sizeof_mach_header(t_machof *f);
-uint32_t	sizeof_nlist(t_machof *f);
-uint32_t	sizeof_section(t_machof *f);
-uint32_t	sizeof_segment(t_machof *f);
-uint64_t	nlist_n_value(t_machof *f, t_nlist *nlist);
-uint64_t	segment_fileoff(t_machof *f, void *seg);
-uint64_t	segment_vmaddr(t_machof *f, void *seg);
-t_lc		*get_lcmd_by_index(t_machof *f, uint32_t cmd, uint32_t idx);
-void		*get_section_by_name_idx(t_machof *f, void *seg, char *sn, uint32_t i);
-void		*get_segment_by_sect_number(t_machof *f, uint8_t sect);
-void		*get_segment_by_name_idx(t_machof *f, char *segname, uint32_t idx);
-void		*get_section_by_number(t_machof *f, uint8_t sect);
+uint16_t	swap16(t_bin *b, uint16_t x);
+uint32_t	swap32(t_bin *b, uint32_t x);
+uint64_t	swap64(t_bin *b, uint64_t x);
+uint32_t	nsects_in_segment(t_bin *b, void *segment);
+uint32_t	sizeof_mach_header(t_bin *b);
+uint32_t	sizeof_nlist(t_bin *b);
+uint32_t	sizeof_section(t_bin *b);
+uint32_t	sizeof_segment(t_bin *b);
+uint64_t	nlist_n_value(t_bin *b, t_nlist *nlist);
+uint64_t	segment_fileoff(t_bin *b, void *seg);
+uint64_t	segment_vmaddr(t_bin *b, void *seg);
+t_lc		*get_lcmd_by_index(t_bin *b, uint32_t cmd, uint32_t idx);
+void		*get_section_by_name_idx(t_bin *b, void *seg, char *sn, uint32_t i);
+void		*get_segment_by_sect_number(t_bin *b, uint8_t sect);
+void		*get_segment_by_name_idx(t_bin *b, char *segname, uint32_t idx);
+void		*get_section_by_number(t_bin *b, uint8_t sect);
 
 
 #endif

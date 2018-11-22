@@ -6,7 +6,7 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/18 10:11:31 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/21 12:17:12 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/21 20:35:21 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@
 ** for example 2nd LC_SEGMENT or first LC_SYMTAB
 */
 
-t_lc	*get_lcmd_by_index(t_machof *f, uint32_t cmd, uint32_t idx)
+t_lc	*get_lcmd_by_index(t_bin *b, uint32_t cmd, uint32_t idx)
 {
 	uint32_t	i;
 	uint32_t	counter;
@@ -26,17 +26,17 @@ t_lc	*get_lcmd_by_index(t_machof *f, uint32_t cmd, uint32_t idx)
 
 	i = 0;
 	counter = 0;
-	offset = sizeof_mach_header(f);
-	while (i < f->ncmds)
+	offset = sizeof_mach_header(b);
+	while (i < b->ncmds)
 	{
-		lcmd = (struct load_command *)&f->single[offset];
-		if (swap32(f, lcmd->cmd) == cmd)
+		lcmd = (struct load_command *)&b->data[offset];
+		if (swap32(b, lcmd->cmd) == cmd)
 		{
 			if (counter == idx)
 				return (lcmd);
 			counter++;
 		}
-		offset += swap32(f, lcmd->cmdsize);
+		offset += swap32(b, lcmd->cmdsize);
 		i++;
 	}
 	return (NULL);
@@ -47,7 +47,7 @@ t_lc	*get_lcmd_by_index(t_machof *f, uint32_t cmd, uint32_t idx)
 ** index is used in case there's multiple occurances of same seg name
 */
 
-void	*get_segment_by_name_idx(t_machof *f, char *segname, uint32_t idx)
+void	*get_segment_by_name_idx(t_bin *b, char *segname, uint32_t idx)
 {
 	uint32_t	lctype;
 	void		*segment;
@@ -55,11 +55,11 @@ void	*get_segment_by_name_idx(t_machof *f, char *segname, uint32_t idx)
 	uint32_t	matches;
 	
 	lctype = LC_SEGMENT_64;
-	if (f->is_64bit == 0)
+	if (b->is_64bit == 0)
 		lctype = LC_SEGMENT;
 	iseg = 0;
 	matches = 0;
-	while ((segment = get_lcmd_by_index(f, lctype, iseg++)) != NULL)
+	while ((segment = get_lcmd_by_index(b, lctype, iseg++)) != NULL)
 	{
 		if ((ft_strcmp(((struct segment_command *) segment)->segname,
 					segname)) == 0)
@@ -72,14 +72,14 @@ void	*get_segment_by_name_idx(t_machof *f, char *segname, uint32_t idx)
 	return (NULL);
 }
 
-void	*get_section_by_name_idx(t_machof *f, void *seg, char *sn, uint32_t i)
+void	*get_section_by_name_idx(t_bin *b, void *seg, char *sn, uint32_t i)
 {
 	uint32_t	matches;
 	uint32_t	nsects;
 	uint32_t	k;
 
-	nsects = nsects_in_segment(f, seg);
-	seg += sizeof_segment(f);
+	nsects = nsects_in_segment(b, seg);
+	seg += sizeof_segment(b);
 	k = 0;
 	matches = 0;
 	while (k < nsects)
@@ -90,15 +90,15 @@ void	*get_section_by_name_idx(t_machof *f, void *seg, char *sn, uint32_t i)
 				return (seg);
 			matches++;
 		}
-		seg += sizeof_section(f);
+		seg += sizeof_section(b);
 		k++;
 	}
 	return (NULL);
 }
 
-uint32_t	load_command_segment(t_machof *f)
+uint32_t	load_command_segment(t_bin *b)
 {
-	if (f->is_64bit == 1)
+	if (b->is_64bit == 1)
 		return (LC_SEGMENT_64);
 	else
 		return (LC_SEGMENT);
@@ -109,7 +109,7 @@ uint32_t	load_command_segment(t_machof *f)
 ** which will be added to value in nlist for a symbol
 */
 
-void	*get_segment_by_sect_number(t_machof *f, uint8_t sect)
+void	*get_segment_by_sect_number(t_bin *b, uint8_t sect)
 {
 	uint32_t	lctype;
 	void		*segment;
@@ -118,12 +118,12 @@ void	*get_segment_by_sect_number(t_machof *f, uint8_t sect)
 	uint32_t	total_sects;
 	
 
-	lctype = load_command_segment(f);
+	lctype = load_command_segment(b);
 	iseg = 0;
 	total_sects = 0;
-	while ((segment = get_lcmd_by_index(f, lctype, iseg++)) != NULL)
+	while ((segment = get_lcmd_by_index(b, lctype, iseg++)) != NULL)
 	{
-		nsects = nsects_in_segment(f, segment);
+		nsects = nsects_in_segment(b, segment);
 		if (nsects > 0)
 		{
 			if ((sect >= total_sects) && (sect <= total_sects + nsects))
@@ -146,7 +146,7 @@ void	*get_segment_by_sect_number(t_machof *f, uint8_t sect)
 ** section number in nload
 */
 
-void	*get_section_by_number(t_machof *f, uint8_t sect)
+void	*get_section_by_number(t_bin *b, uint8_t sect)
 {
 	uint32_t	lctype;
 	void		*segment;
@@ -154,18 +154,18 @@ void	*get_section_by_number(t_machof *f, uint8_t sect)
 	uint32_t	nsects;
 	uint32_t	total_sects;
 	
-	lctype = load_command_segment(f);
+	lctype = load_command_segment(b);
 	iseg = 0;
 	total_sects = 0;
-	while ((segment = get_lcmd_by_index(f, lctype, iseg++)) != NULL)
+	while ((segment = get_lcmd_by_index(b, lctype, iseg++)) != NULL)
 	{
-		nsects = nsects_in_segment(f, segment);
+		nsects = nsects_in_segment(b, segment);
 		if (nsects > 0)
 		{
 			if ((sect >= total_sects) && (sect <= total_sects + nsects))
 			{
-				segment += sizeof_segment(f);
-				segment += sizeof_section(f) * (sect - total_sects - 1);
+				segment += sizeof_segment(b);
+				segment += sizeof_section(b) * (sect - total_sects - 1);
 				return (segment);
 			}
 			total_sects += nsects;
