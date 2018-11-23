@@ -1,10 +1,16 @@
 #!/bin/bash
 
-wildcard='/usr/bin/*'
-#wildcard='testers/*'
+
+if [ -z "$1" ]; then
+	echo "usage: $0 <path>*"
+	exit
+fi
+
+
+
 outputf='DiffyDiff/'
 
-prog1='./stephen/ft_nm '
+prog1='./ft_nm '
 ext1='.alex'
 prog2='/usr/bin/nm '
 ext2='.nemo'
@@ -23,7 +29,7 @@ good="$green hashes are the same $nc"
 rm -rf $outputf
 mkdir -p $outputf
 
-for f0 in $wildcard; do
+for f0 in $1; do
 	f1=`echo $f0 | sed 's/.*\///'`
 
 	o1=$outputf$f1$ext1

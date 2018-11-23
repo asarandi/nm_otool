@@ -6,7 +6,7 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/16 01:02:15 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/22 03:50:26 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/22 22:30:23 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -375,7 +375,6 @@ uint64_t	fat_arch_offset(t_file *f, void *header)
 	}
 }
 
-
 uint64_t	fat_arch_size(t_file *f, void *header)
 {
 	if (f->is_fat64)
@@ -476,11 +475,6 @@ uint32_t	fat_arch_cpusubtype(t_file *f, void *fat_arch)
 		return (((struct fat_arch *)fat_arch)->cpusubtype);
 }
 
-
-#define HOST_CPUTYPE		0x01000007
-#define HOST_CPUSUBTYPE		0x80000003
-#define HOST_CPUMASK		0x01000000
-
 int	fat_file_choose_arch(t_file *f)
 {
 	uint32_t	i;
@@ -493,16 +487,33 @@ int	fat_file_choose_arch(t_file *f)
 	{
 		fat_arch = &f->map[
 			sizeof(struct fat_header) + (sizeof_fat_arch(f) * i)];
-		if ((fat_arch_cputype(f, fat_arch) == HOST_CPUTYPE) &&
-			(fat_arch_cpusubtype(f, fat_arch) == HOST_CPUSUBTYPE))
+		if ((fat_arch_cputype(f, fat_arch) & CPU_TYPE_X86_64) &&
+			(fat_arch_cpusubtype(f, fat_arch) & CPU_SUBTYPE_X86_64_ALL))
 			return (i);
-		if (fat_arch_cputype(f, fat_arch) & HOST_CPUMASK)
+		if (fat_arch_cputype(f, fat_arch) & CPU_ARCH_ABI64)
 			second_choice = i;
 		i++;
 	}
 	return (second_choice);
 }
 
+void fat_print_arches(t_file *f)
+{
+	uint32_t	i;
+	void		*fat_arch;
+
+	ft_printf("ARCH: %s\n", f->fn);
+	i = 0;
+	while (i < file_nfat_arch(f))
+	{
+		fat_arch = &f->map[
+			sizeof(struct fat_header) + (sizeof_fat_arch(f) * i)];
+		(void)print_arch_info(f, fat_arch);
+
+		i++;
+	}
+	return ;
+}
 
 int	fat_file_loader(t_file *f)
 {
@@ -510,24 +521,15 @@ int	fat_file_loader(t_file *f)
 	uint32_t	i;
 	void		*fat_arch;
 
-//	ft_printf("ARCH: %s\n", f->fn);
+	(void)fat_print_arches(f);
+
 	i = fat_file_choose_arch(f);
-//	while (i < file_nfat_arch(f))
-//	{
 	ft_memset(&b, 0, sizeof(t_bin));
 	fat_arch = &f->map[sizeof(struct fat_header) + (sizeof_fat_arch(f) * i)];
 	b.data = &f->map[fat_arch_offset(f, fat_arch)];
 	b.fsize = fat_arch_size(f, fat_arch);
 	b.fn = NULL;
-//	print_arch_info(f, fat_arch);
-
 	process_macho(&b);
-//		i++;
-//		break ; /* XXX first only */
-//	}
-	//process fat header, go through arch'es
-	//pick binary to display
-	//send to process_macho()
 	return (0);
 }
 
@@ -552,13 +554,11 @@ int	binary_loader(t_file *f)
 		b.fsize = f->st.st_size;
 		return (process_macho(&b));
 	}
-
 	else if (is_fat_file(f))			//multi-arch, fat binary
 		return (fat_file_loader(f));
 
 	else if (is_archive_file(f))		//archive, like libft.a
 		return (archive_file_loader(f));
-
 	else
 		return (fclose_msgerr(f->fd, E_BADFTYPE_ERR, f->fn));
 }
