@@ -6,7 +6,7 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/16 01:02:15 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/23 13:20:04 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/23 13:42:51 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -567,13 +567,13 @@ int	is_archive_file(t_file *f)
 
 int	is_symdef(char *s)
 {
-	if (strcmp(s, SYMDEF) == 0)
+	if (ft_strcmp(s, SYMDEF) == 0)
 		return (1);
-	if (strcmp(s, SYMDEF_SORTED) == 0)
+	if (ft_strcmp(s, SYMDEF_SORTED) == 0)
 		return (1);
-	if (strcmp(s, SYMDEF_64) == 0)
+	if (ft_strcmp(s, SYMDEF_64) == 0)
 		return (1);
-	if (strcmp(s, SYMDEF_64_SORTED) == 0)
+	if (ft_strcmp(s, SYMDEF_64_SORTED) == 0)
 		return (1);
 	return (0);
 }
@@ -667,6 +667,10 @@ int main(int ac, char **av)
 		i++;
 	}
 	if (i == 1)
-		(void)show_usage(av[0]);
+	{
+		(void)ft_memset(&f, 0, sizeof(t_file));
+		f.fn = "a.out";
+		(void)process_file(&f);
+	}
 	return (0);
 }
