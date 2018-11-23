@@ -6,7 +6,7 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/17 02:19:41 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/22 00:54:54 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/23 13:15:57 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,8 @@
 #include <mach-o/loader.h>
 #include <mach-o/nlist.h>
 #include <mach-o/fat.h>
+#include <ar.h>
+#include <mach-o/ranlib.h>
 
 #define E_OPEN_ERR		"open() failed"
 #define E_FSTAT_ERR		"fstat() failed"
@@ -33,9 +35,7 @@
 #define E_FNOTREG_ERR		"not a regular file"
 #define E_BADOFFSET_ERR		"invalid values in header"
 #define E_BADFTYPE_ERR		"unsupported file type"
-#define ARCHIVE_MAGIC 		"!<arch>\n"
-
-
+#define E_ARBADFMAG			"bad fmag in archive"
 
 #ifndef FAT_MAGIC_64
 # define FAT_MAGIC_64  0xcafebabf
@@ -60,18 +60,6 @@ typedef struct load_command		t_lc;
 typedef struct symtab_command	t_stc;
 typedef struct nlist			t_nlist;
 
-typedef	struct				s_bin
-{
-	char					*fn;
-	off_t					fsize;
-	void					*data;
-	int						is_64bit;
-	int						is_swapped;
-	struct mach_header		*mh;
-	uint32_t				ncmds;
-	struct symtab_command	*stc;
-}							t_bin;
-
 typedef struct				t_file
 {
 	char					*fn;
@@ -83,6 +71,20 @@ typedef struct				t_file
 	int						is_fat64;
 	int						is_swapped;
 }							t_file;
+
+typedef	struct				s_bin
+{
+	t_file					*parent;
+	char					*fn;
+	off_t					fsize;
+	void					*data;
+	int						is_64bit;
+	int						is_swapped;
+	struct mach_header		*mh;
+	uint32_t				ncmds;
+	struct symtab_command	*stc;
+}							t_bin;
+
 
 
 int			fclose_msgerr(int fd, char *s1, char *s2);

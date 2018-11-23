@@ -6,7 +6,7 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/16 01:02:15 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/22 22:30:23 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/23 13:20:04 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -237,6 +237,12 @@ void	print_symptr_array(t_bin *b, t_stc *stc, t_nlist **array, uint32_t n)
 	}
 }
 
+void	print_parent_name(t_bin *b)
+{
+	if ((b->parent != NULL) && (b->parent->is_archive))
+		ft_printf("\n%s(%s):\n", b->parent->fn, b->fn);
+}
+
 void	nm_print(t_bin *b, t_stc *stc)
 {
 	uint32_t		count;
@@ -246,6 +252,7 @@ void	nm_print(t_bin *b, t_stc *stc)
 	array = ft_memalloc((count + 1) * sizeof_nlist(b));
 	array = populate_symptr_array(b, stc, array);
 	array = sort_symptr_array(b, stc, array, count);
+	(void)print_parent_name(b);
 	(void)print_symptr_array(b, stc, array, count);
 	free(array);
 	return ;
@@ -335,13 +342,6 @@ int	is_fat_file(t_file *f)
 }
 
 
-int	is_archive_file(t_file *f)
-{
-	f->is_archive = 0;
-	if (ft_strcmp(ARCHIVE_MAGIC, (char *)f->map) == 0)
-		f->is_archive = 1;
-	return (f->is_archive);
-}
 
 
 
@@ -533,12 +533,82 @@ int	fat_file_loader(t_file *f)
 	return (0);
 }
 
+/*
+** man 5 ar
+*/
+
+/*
+** copy n bytes from src to dst, and null terminate dest
+*/
+
+char	*ft_strcpx(char *dst, char *src, size_t n)
+{
+	size_t i;
+
+	i = 0;
+	while (i < n)
+	{
+		if (!src[i])
+			break ;
+		dst[i] = src[i];
+		i++;
+	}
+	dst[i] = 0;
+	return (dst);
+}
+
+int	is_archive_file(t_file *f)
+{
+	f->is_archive = 0;
+	if (ft_strncmp((char *)f->map, ARMAG, SARMAG) == 0)
+		f->is_archive = 1;
+	return (f->is_archive);
+}
+
+int	is_symdef(char *s)
+{
+	if (strcmp(s, SYMDEF) == 0)
+		return (1);
+	if (strcmp(s, SYMDEF_SORTED) == 0)
+		return (1);
+	if (strcmp(s, SYMDEF_64) == 0)
+		return (1);
+	if (strcmp(s, SYMDEF_64_SORTED) == 0)
+		return (1);
+	return (0);
+}
+
 int	archive_file_loader(t_file *f)
 {
-	(void)f;
-	//parse header
-	//iterate through all objects
-	//send to process_macho
+	struct ar_hdr	*ah;
+	static char	buf[4096];
+	t_bin	b;
+
+	ah = (struct ar_hdr *)&f->map[SARMAG];
+	while ((void *)ah - f->map < f->st.st_size)
+	{
+		(void)ft_memset(&b, 0, sizeof(t_bin));
+		if (ft_strncmp(ah->ar_fmag, ARFMAG, ft_strlen(ARFMAG)) != 0)
+			return (msgerr(E_ARBADFMAG, f->fn));
+			/* XXX implement boundary check */
+		b.parent = f;
+		b.fsize = ft_atoi(ft_strcpx(buf, ah->ar_size, sizeof(ah->ar_size)));
+		b.data = (void *)ah + sizeof(struct ar_hdr);
+		if (ft_strncmp(ah->ar_name, AR_EFMT1, ft_strlen(AR_EFMT1)) == 0)
+		{
+			(void)ft_strcpx(buf, (char *)ah + sizeof(struct ar_hdr), ft_atoi(ah->ar_name + ft_strlen(AR_EFMT1)));
+			b.data += ft_atoi(ah->ar_name + ft_strlen(AR_EFMT1));
+			b.fsize -= ft_atoi(ah->ar_name + ft_strlen(AR_EFMT1));
+		}
+		else
+			(void)ft_strcpx(buf, ah->ar_name, sizeof(ah->ar_name));
+		//buf now has a copy of file name in archive
+		b.fn = &buf[0];
+//		b.data += (void *)ah + sizeof(struct ar_hdr);
+		if (!is_symdef(b.fn))
+			process_macho(&b);
+		ah = (struct ar_hdr *)&b.data[b.fsize];
+	}
 	return (0);
 }
 
