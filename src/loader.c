@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   macho.c                                            :+:      :+:    :+:   */
+/*   loader.c                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/23 19:39:16 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/23 20:53:36 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/23 21:22:44 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,6 @@ int	validate_macho(t_bin *b)
 	uint32_t			i;
 	off_t				offset;
 	struct load_command	*lc;
-
 
 	if (!is_valid_magic(b->data, &b->is_64bit, &b->is_swapped))
 		return (msgerr(E_BADMAGIC_ERR, b->fn));
@@ -50,11 +49,11 @@ int	process_macho(t_bin *b, void (*func)(t_bin *))
 	return (0);
 }
 
-int	binary_loader(t_file *f, void(*func)(t_bin *))
+int	binary_loader(t_file *f, void (*func)(t_bin *))
 {
 	t_bin		b;
 
-	if (is_macho_file(f))				//standalone macho
+	if (is_macho_file(f))
 	{
 		(void)ft_memset(&b, 0, sizeof(t_bin));
 		b.data = f->map;
@@ -63,16 +62,15 @@ int	binary_loader(t_file *f, void(*func)(t_bin *))
 		b.parent = f;
 		return (process_macho(&b, func));
 	}
-	else if (is_fat_file(f))			//multi-arch, fat binary
+	else if (is_fat_file(f))
 		return (fat_file_loader(f, func));
-
-	else if (is_archive_file(f))		//archive, like libft.a
+	else if (is_archive_file(f))
 		return (archive_file_loader(f, func));
 	else
 		return (msgerr(E_BADFTYPE_ERR, f->fn));
 }
 
-int	process_file(t_file *f, void(*func)(t_bin *))
+int	process_file(t_file *f, void (*func)(t_bin *))
 {
 	if ((f->fd = open(f->fn, O_RDONLY)) == -1)
 		return (msgerr(E_OPEN_ERR, f->fn));

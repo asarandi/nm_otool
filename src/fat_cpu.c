@@ -6,7 +6,7 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/23 19:33:42 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/23 19:55:45 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/23 21:40:22 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,7 @@ uint32_t	fat_arch_cpusubtype(t_file *f, void *fat_arch)
 		return (((struct fat_arch *)fat_arch)->cpusubtype);
 }
 
-void fat_file_cpu_info(t_file *f, t_bin *b, void *fatarch)
+void		fat_file_cpu_info(t_file *f, t_bin *b, void *fatarch)
 {
 	uint32_t		cputype;
 	uint32_t		cpusubtype;

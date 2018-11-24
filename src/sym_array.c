@@ -6,7 +6,7 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/23 19:26:47 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/23 19:58:15 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/23 21:18:52 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,7 +35,7 @@ t_nlist	**populate_symptr_array(t_bin *b, t_stc *stc, t_nlist **array)
 	return (array);
 }
 
-uint32_t	count_symbols_to_display(t_bin *b, t_stc *stc)
+t_u32	count_symbols_to_display(t_bin *b, t_stc *stc)
 {
 	uint32_t		i;
 	uint32_t		count;
@@ -55,7 +55,7 @@ uint32_t	count_symbols_to_display(t_bin *b, t_stc *stc)
 	return (count);
 }
 
-int	compare_symbols(t_bin *b, t_stc *stc, t_nlist *sym1, t_nlist *sym2)
+int		compare_symbols(t_bin *b, t_stc *stc, t_nlist *sym1, t_nlist *sym2)
 {
 	uint32_t	stroff;
 	uint32_t	n_strx;
@@ -72,7 +72,6 @@ int	compare_symbols(t_bin *b, t_stc *stc, t_nlist *sym1, t_nlist *sym2)
 	if (!res)
 		res = (int)(nlist_n_value(b, sym1) - nlist_n_value(b, sym2));
 	return (res);
-
 }
 
 t_nlist	**sort_symptr_array(t_bin *b, t_stc *stc, t_nlist **array, uint32_t n)

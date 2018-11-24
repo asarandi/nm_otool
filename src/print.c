@@ -6,7 +6,7 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/23 19:41:25 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/23 19:43:23 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/23 21:20:29 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,6 @@ void	print_symbol(t_bin *b, uint64_t addr, char sym, char *name)
 	ft_printf("\n");
 	return ;
 }
-
 
 void	print_symptr_array(t_bin *b, t_stc *stc, t_nlist **array, uint32_t n)
 {

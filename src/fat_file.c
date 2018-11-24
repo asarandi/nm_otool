@@ -6,7 +6,7 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/23 19:33:14 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/23 20:51:18 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/23 21:41:25 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,7 @@ uint32_t	fat_file_find_host_arch(t_file *f)
 	return (0xffffffff);
 }
 
-int			fat_file_process(t_file *f, void *fat_arch, void(*func)(t_bin *))
+int			fat_file_process(t_file *f, void *fat_arch, void (*func)(t_bin *))
 {
 	t_bin	b;
 
@@ -43,7 +43,7 @@ int			fat_file_process(t_file *f, void *fat_arch, void(*func)(t_bin *))
 	return (0);
 }
 
-int			fat_file_loader(t_file *f, void(*func)(t_bin *))
+int			fat_file_loader(t_file *f, void (*func)(t_bin *))
 {
 	uint32_t	i;
 	void		*fat_arch;

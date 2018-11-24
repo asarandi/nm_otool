@@ -6,13 +6,13 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/23 19:43:54 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/23 19:45:47 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/23 21:14:33 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "common.h"
 
-char	get_symchar_from_section(t_bin *b, uint8_t n_sect)
+char		get_symchar_from_section(t_bin *b, uint8_t n_sect)
 {
 	void	*sect;
 	char	*sectname;
@@ -21,22 +21,22 @@ char	get_symchar_from_section(t_bin *b, uint8_t n_sect)
 	sect = get_section_by_number(b, n_sect);
 	if (sect != NULL)
 	{
-		sectname = ((struct section *) sect)->sectname;
-		segname = ((struct section *) sect)->segname;
-		if ((ft_strcmp(segname, SEG_TEXT) == 0) &&		//SEG_TEXT
-				(ft_strcmp(sectname, SECT_TEXT) == 0))	//SECT_TEXT
+		sectname = ((struct section *)sect)->sectname;
+		segname = ((struct section *)sect)->segname;
+		if ((ft_strcmp(segname, SEG_TEXT) == 0) &&
+				(ft_strcmp(sectname, SECT_TEXT) == 0))
 			return ('t');
-		if ((ft_strcmp(segname, SEG_DATA) == 0) &&		//SEG_DATA
-				(ft_strcmp(sectname, SECT_DATA) == 0))	//SECT_DATA
+		if ((ft_strcmp(segname, SEG_DATA) == 0) &&
+				(ft_strcmp(sectname, SECT_DATA) == 0))
 			return ('d');
-		if ((ft_strcmp(segname, SEG_DATA) == 0) &&		//SEG_DATA
-				(ft_strcmp(sectname, SECT_BSS) == 0))	//SECT_BSS
+		if ((ft_strcmp(segname, SEG_DATA) == 0) &&
+				(ft_strcmp(sectname, SECT_BSS) == 0))
 			return ('b');
 	}
 	return ('s');
 }
 
-char	get_symchar_from_ntype(t_bin *b, t_nlist *sym)
+char		get_symchar_from_ntype(t_bin *b, t_nlist *sym)
 {
 	char	symchar;
 
@@ -57,7 +57,7 @@ char	get_symchar_from_ntype(t_bin *b, t_nlist *sym)
 	return (symchar);
 }
 
-char	*get_symname_from_nlist(t_bin *b, t_stc *stc, t_nlist *sym)
+char		*get_symname_from_nlist(t_bin *b, t_stc *stc, t_nlist *sym)
 {
 	uint32_t	n_strx;
 	uint32_t	stroff;

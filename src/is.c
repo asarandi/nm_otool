@@ -6,7 +6,7 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/23 19:22:53 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/23 19:25:50 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/23 21:23:36 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,7 +67,7 @@ int	is_symdef(char *s)
 	return (0);
 }
 
-int		is_print_symaddr(char c)
+int	is_print_symaddr(char c)
 {
 	if ((c == 'U') || (c == 'u'))
 		return (0);
