@@ -6,7 +6,7 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/17 02:19:41 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/23 22:09:56 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/23 23:49:40 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -100,6 +100,7 @@ typedef	struct				s_bin
 	struct mach_header		*mh;
 	uint32_t				ncmds;
 	struct symtab_command	*stc;
+	struct nlist			**array;
 }							t_bin;
 
 #endif

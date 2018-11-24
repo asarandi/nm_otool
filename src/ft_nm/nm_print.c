@@ -6,7 +6,7 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/23 19:41:25 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/23 22:52:13 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/23 23:09:11 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -80,7 +80,7 @@ void	nm_print(t_bin *b, t_stc *stc)
 	struct nlist	**array;
 
 	count = count_symbols_to_display(b, stc);
-	array = ft_memalloc((count + 1) * sizeof_nlist(b));
+	array = ft_memalloc((count + 1) * sizeof(struct nlist *));
 	array = populate_symptr_array(b, stc, array);
 	array = sort_symptr_array(b, stc, array, count);
 	(void)print_parent_name(b);

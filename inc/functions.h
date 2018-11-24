@@ -6,7 +6,7 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/23 19:46:47 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/23 22:10:46 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/23 23:50:44 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,7 @@ char		get_symchar_from_ntype(t_bin *b, t_nlist *sym);
 char		get_symchar_from_section(t_bin *b, uint8_t n_sect);
 int			archive_file_loader(t_file *f, void(*func)(t_bin *));
 int			binary_loader(t_file *f, void (*func)(t_bin *));
-int			compare_symbols(t_bin *b, t_stc *stc, t_nlist *sym1, t_nlist *sym2);
+int			compare_symbols(t_bin *b, t_nlist *sym1, t_nlist *sym2);
 int			fat_file_loader(t_file *f, void(*func)(t_bin *));
 int			fat_file_process(t_file *f, void *fat_arch, void(*func)(t_bin *));
 int			fclose_msgerr(int fd, char *s1, char *s2);
