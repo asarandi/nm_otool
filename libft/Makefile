@@ -1,5 +1,5 @@
 NAME		= libft.a
-CFLAGS		+= -g -Wall -Werror -Wextra
+CFLAGS		+= -O2 -Wall -Werror -Wextra
 CFLAGS		+= -I inc/
 FILES = ft_atoi.c \
         ft_base64encode.c \

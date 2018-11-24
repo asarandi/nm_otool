@@ -1,6 +1,6 @@
-CFLAGS		+= -g -Wall -Werror -Wextra
+CFLAGS		+= -O2 -Wall -Werror -Wextra
 CFLAGS		+= -I inc/ -I libft/inc/
-LDFLAGS		+= -g -Wall -Werror -Wextra -L libft/ -lft
+LDFLAGS		+= -O2 -Wall -Werror -Wextra -L libft/ -lft
 NM			= ft_nm
 NM_FILES	= helpers.c main.c nm_print.c nm_segments.c sort.c sym_array.c symbol.c
 OTOOL		= ft_otool
