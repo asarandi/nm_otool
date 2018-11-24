@@ -6,7 +6,7 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/18 10:11:31 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/21 20:35:21 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/23 19:19:38 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,7 +53,7 @@ void	*get_segment_by_name_idx(t_bin *b, char *segname, uint32_t idx)
 	void		*segment;
 	uint32_t	iseg;
 	uint32_t	matches;
-	
+
 	lctype = LC_SEGMENT_64;
 	if (b->is_64bit == 0)
 		lctype = LC_SEGMENT;
@@ -61,7 +61,7 @@ void	*get_segment_by_name_idx(t_bin *b, char *segname, uint32_t idx)
 	matches = 0;
 	while ((segment = get_lcmd_by_index(b, lctype, iseg++)) != NULL)
 	{
-		if ((ft_strcmp(((struct segment_command *) segment)->segname,
+		if ((ft_strcmp(((struct segment_command *)segment)->segname,
 					segname)) == 0)
 		{
 			if (matches == idx)
@@ -84,7 +84,7 @@ void	*get_section_by_name_idx(t_bin *b, void *seg, char *sn, uint32_t i)
 	matches = 0;
 	while (k < nsects)
 	{
-		if (ft_strcmp(((struct section *) seg)->sectname, sn) == 0)
+		if (ft_strcmp(((struct section *)seg)->sectname, sn) == 0)
 		{
 			if (matches == i)
 				return (seg);
@@ -94,14 +94,6 @@ void	*get_section_by_name_idx(t_bin *b, void *seg, char *sn, uint32_t i)
 		k++;
 	}
 	return (NULL);
-}
-
-uint32_t	load_command_segment(t_bin *b)
-{
-	if (b->is_64bit == 1)
-		return (LC_SEGMENT_64);
-	else
-		return (LC_SEGMENT);
 }
 
 /*
@@ -116,7 +108,6 @@ void	*get_segment_by_sect_number(t_bin *b, uint8_t sect)
 	uint32_t	iseg;
 	uint32_t	nsects;
 	uint32_t	total_sects;
-	
 
 	lctype = load_command_segment(b);
 	iseg = 0;
@@ -128,10 +119,9 @@ void	*get_segment_by_sect_number(t_bin *b, uint8_t sect)
 		{
 			if ((sect >= total_sects) && (sect <= total_sects + nsects))
 				return (segment);
-		total_sects += nsects;
+			total_sects += nsects;
 		}
 	}
-
 	return (NULL);
 }
 
@@ -139,7 +129,7 @@ void	*get_segment_by_sect_number(t_bin *b, uint8_t sect)
 ** this goes through all sections in the macho
 ** finds the segment that contains section #n,
 ** then goes to that particular section
-** returns (void *) which is 
+** returns (void *) which is
 ** either (struct section *) or (struct section_64 *)
 ** this function is for devising the character that
 ** represents the symbol in symtable based on the
@@ -153,7 +143,7 @@ void	*get_section_by_number(t_bin *b, uint8_t sect)
 	uint32_t	iseg;
 	uint32_t	nsects;
 	uint32_t	total_sects;
-	
+
 	lctype = load_command_segment(b);
 	iseg = 0;
 	total_sects = 0;

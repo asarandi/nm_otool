@@ -6,7 +6,7 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/19 17:56:13 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/21 20:35:54 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/23 19:12:15 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,7 @@ uint64_t	segment_vmaddr(t_bin *b, void *seg)
 	if (b->is_64bit)
 		res = swap64(b, ((struct segment_command_64 *)seg)->vmaddr);
 	else
-		res = swap32(b, ((struct segment_command *) seg)->vmaddr);
+		res = swap32(b, ((struct segment_command *)seg)->vmaddr);
 	return (res);
 }
 
@@ -41,6 +41,6 @@ uint64_t	segment_fileoff(t_bin *b, void *seg)
 	if (b->is_64bit)
 		res = swap64(b, ((struct segment_command_64 *)seg)->fileoff);
 	else
-		res = swap32(b, ((struct segment_command *) seg)->fileoff);
+		res = swap32(b, ((struct segment_command *)seg)->fileoff);
 	return (res);
 }

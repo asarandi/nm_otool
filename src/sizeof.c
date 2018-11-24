@@ -6,7 +6,7 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/18 10:03:28 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/21 20:34:42 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/23 19:11:35 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,6 @@ uint32_t	sizeof_segment(t_bin *b)
 		return (sizeof(struct segment_command_64));
 	else
 		return (sizeof(struct segment_command));
-
 }
 
 uint32_t	sizeof_section(t_bin *b)
@@ -40,9 +39,9 @@ uint32_t	sizeof_section(t_bin *b)
 uint32_t	nsects_in_segment(t_bin *b, void *segment)
 {
 	if (b->is_64bit == 1)
-		return (swap32(b, ((struct segment_command_64 *) segment)->nsects));
+		return (swap32(b, ((struct segment_command_64 *)segment)->nsects));
 	else
-		return (swap32(b, ((struct segment_command *) segment)->nsects));
+		return (swap32(b, ((struct segment_command *)segment)->nsects));
 }
 
 uint32_t	sizeof_mach_header(t_bin *b)

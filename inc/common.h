@@ -6,7 +6,7 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/17 02:19:41 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/23 18:53:56 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/23 19:56:47 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 
 #include "libft.h"
 #include "libftprintf.h"
+#include "functions.h"
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdlib.h>
@@ -68,7 +69,6 @@ hello_7_arches (for architecture armv7):	Mach-O executable arm_v7
 hello_7_arches (for architecture armv7s):	Mach-O executable arm_v7s
 hello_7_arches (for architecture arm64):	Mach-O 64-bit executable arm64
 
-
 */
 
 #ifndef FAT_MAGIC_64
@@ -93,7 +93,7 @@ typedef struct load_command		t_lc;
 typedef struct symtab_command	t_stc;
 typedef struct nlist			t_nlist;
 
-typedef struct				t_file
+typedef struct				s_file
 {
 	int						print_names;
 	char					*fn;
