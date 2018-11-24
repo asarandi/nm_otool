@@ -6,7 +6,7 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/16 01:02:15 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/23 13:42:51 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/23 18:53:46 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -237,10 +237,26 @@ void	print_symptr_array(t_bin *b, t_stc *stc, t_nlist **array, uint32_t n)
 	}
 }
 
+
+/*
+** if (ft_strcmp  ... is a reproduction of a bug in nm
+*/
+
 void	print_parent_name(t_bin *b)
 {
-	if ((b->parent != NULL) && (b->parent->is_archive))
+	if (b->parent->is_archive)
 		ft_printf("\n%s(%s):\n", b->parent->fn, b->fn);
+	else if (b->parent->is_fat)
+	{
+		if (ft_strcmp(b->arch, HOST_ARCH) != 0)
+		{
+			ft_printf("\n%s (for architecture %s):\n",
+				b->parent->fn, b->arch);
+		}
+	}
+	else if (b->parent->print_names)
+		ft_printf("\n%s:\n", b->parent->fn);
+	return ;
 }
 
 void	nm_print(t_bin *b, t_stc *stc)
@@ -475,26 +491,22 @@ uint32_t	fat_arch_cpusubtype(t_file *f, void *fat_arch)
 		return (((struct fat_arch *)fat_arch)->cpusubtype);
 }
 
-int	fat_file_choose_arch(t_file *f)
+uint32_t	fat_file_find_host_arch(t_file *f)
 {
 	uint32_t	i;
-	uint32_t	second_choice;
 	void		*fat_arch;
 
 	i = 0;
-	second_choice = 0;
 	while (i < file_nfat_arch(f))
 	{
 		fat_arch = &f->map[
 			sizeof(struct fat_header) + (sizeof_fat_arch(f) * i)];
-		if ((fat_arch_cputype(f, fat_arch) & CPU_TYPE_X86_64) &&
-			(fat_arch_cpusubtype(f, fat_arch) & CPU_SUBTYPE_X86_64_ALL))
+		if ((fat_arch_cputype(f, fat_arch) == HOST_CPU_TYPE) &&
+			(fat_arch_cpusubtype(f, fat_arch) == HOST_CPU_SUBTYPE))
 			return (i);
-		if (fat_arch_cputype(f, fat_arch) & CPU_ARCH_ABI64)
-			second_choice = i;
 		i++;
 	}
-	return (second_choice);
+	return (0xffffffff);
 }
 
 void fat_print_arches(t_file *f)
@@ -515,21 +527,66 @@ void fat_print_arches(t_file *f)
 	return ;
 }
 
+void fat_file_cpu_info(t_file *f, t_bin *b, struct fat_arch *fat_arch)
+{
+	uint32_t	cputype;
+	uint32_t	cpusubtype;
+
+	cputype = fat_arch_cputype(f, fat_arch);
+	cpusubtype = fat_arch_cpusubtype(f, fat_arch);
+	if ((cputype == 0x00000007) && (cpusubtype == 0x00000003))
+		b->arch = ARCH_I386;
+	else if ((cputype == 0x01000007) && (cpusubtype == 0x80000003))
+		b->arch = ARCH_X86_64;
+	else if ((cputype == 0x0000000c) && (cpusubtype == 0x00000009))
+		b->arch = ARCH_ARMV7;
+	else if ((cputype == 0x0000000c) && (cpusubtype == 0x0000000b))
+		b->arch = ARCH_ARMV7S;
+	else if ((cputype == 0x0100000c) && (cpusubtype == 0x00000000))
+		b->arch = ARCH_ARM64;
+	else
+		b->arch = EMPTY_STRING;
+	return ;
+}
+
+
+int	fat_file_process(t_file *f, void *fat_arch)
+{
+	t_bin	b;
+
+	(void)ft_memset(&b, 0, sizeof(t_bin));
+	b.data = &f->map[fat_arch_offset(f, fat_arch)];
+	b.fsize = fat_arch_size(f, fat_arch);
+	b.parent = f;
+	(void)fat_file_cpu_info(f, &b, fat_arch);
+	process_macho(&b);
+	return (0);
+}
+
 int	fat_file_loader(t_file *f)
 {
-	t_bin		b;
 	uint32_t	i;
 	void		*fat_arch;
 
-	(void)fat_print_arches(f);
-
-	i = fat_file_choose_arch(f);
-	ft_memset(&b, 0, sizeof(t_bin));
-	fat_arch = &f->map[sizeof(struct fat_header) + (sizeof_fat_arch(f) * i)];
-	b.data = &f->map[fat_arch_offset(f, fat_arch)];
-	b.fsize = fat_arch_size(f, fat_arch);
-	b.fn = NULL;
-	process_macho(&b);
+//	(void)fat_print_arches(f);
+	i = fat_file_find_host_arch(f);
+	if (i != 0xffffffff)
+	{
+		fat_arch = &f->map[sizeof(struct fat_header) +
+			(sizeof_fat_arch(f) * i)];
+		return (fat_file_process(f, fat_arch));
+	}
+	else
+	{
+		i = 0;
+		while (i < file_nfat_arch(f))
+		{
+			fat_arch = &f->map[sizeof(struct fat_header) +
+				(sizeof_fat_arch(f) * i)];
+			(void)fat_file_process(f, fat_arch);
+			i++;
+		}
+	}
 	return (0);
 }
 
@@ -622,6 +679,7 @@ int	binary_loader(t_file *f)
 		b.data = f->map;
 		b.fn = f->fn;
 		b.fsize = f->st.st_size;
+		b.parent = f;
 		return (process_macho(&b));
 	}
 	else if (is_fat_file(f))			//multi-arch, fat binary
@@ -662,6 +720,8 @@ int main(int ac, char **av)
 	while (i < ac)
 	{
 		(void)ft_memset(&f, 0, sizeof(t_file));
+		if (ac > 2)
+			f.print_names = 1;
 		f.fn = av[i];
 		(void)process_file(&f);
 		i++;

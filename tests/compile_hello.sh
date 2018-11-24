@@ -39,6 +39,8 @@ lipo MachO-iOS-arm1176JZFS-bash MachO-OSX-ppc-openssl-1.0.1h hello-armv7 hello-a
 
 file hello_7_arches
 
+lipo MachO-iOS-arm1176JZFS-bash MachO-OSX-ppc-openssl-1.0.1h -create -output too_exotic
+
 #/usr/bin/nm hello_4_arches | less
 
 #/usr/bin/nm hello_5_arches | less

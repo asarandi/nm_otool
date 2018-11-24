@@ -6,7 +6,7 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/17 02:19:41 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/23 13:15:57 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/23 18:53:56 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,6 +36,40 @@
 #define E_BADOFFSET_ERR		"invalid values in header"
 #define E_BADFTYPE_ERR		"unsupported file type"
 #define E_ARBADFMAG			"bad fmag in archive"
+#define ARCH_X86_64			"x86_64"
+#define ARCH_I386			"i386"
+#define	ARCH_ARMV7			"armv7"
+#define ARCH_ARMV7S			"armv7s"
+#define ARCH_ARM64			"arm64"
+#define EMPTY_STRING		""
+#define	HOST_CPU_TYPE		0x01000007
+#define HOST_CPU_SUBTYPE	0x80000003
+#define	HOST_ARCH			ARCH_X86_64
+
+/*
+
+e1z4r13p7% ../ft_nm hello_7_arches|grep 'ARCH'
+ARCH: hello_7_arches
+ARCH: cputype = 00000012, cpusubtype = 0000000a, offset = 0000000000001000, size = 000000000006e008, align = 0000000c
+ARCH: cputype = 00000007, cpusubtype = 00000003, offset = 0000000000070000, size = 00000000000020e0, align = 0000000c
+ARCH: cputype = 01000007, cpusubtype = 80000003, offset = 0000000000073000, size = 00000000000020f0, align = 0000000c
+ARCH: cputype = 0000000c, cpusubtype = 00000000, offset = 0000000000078000, size = 00000000000857d0, align = 0000000e
+ARCH: cputype = 0000000c, cpusubtype = 00000009, offset = 0000000000100000, size = 000000000000c0ec, align = 0000000e
+ARCH: cputype = 0000000c, cpusubtype = 0000000b, offset = 0000000000110000, size = 000000000000c0ec, align = 0000000e
+ARCH: cputype = 0100000c, cpusubtype = 00000000, offset = 0000000000120000, size = 000000000000c0f0, align = 0000000e
+e1z4r13p7% file hello_7_arches            
+hello_7_arches: Mach-O universal binary with 7 architectures: [ppc_7400:Mach-O executable ppc_7400]
+
+hello_7_arches (for architecture ppc7400):	Mach-O executable ppc_7400
+hello_7_arches (for architecture i386):	Mach-O executable i386
+hello_7_arches (for architecture x86_64):	Mach-O 64-bit executable x86_64
+hello_7_arches (for architecture arm):	Mach-O executable arm
+hello_7_arches (for architecture armv7):	Mach-O executable arm_v7
+hello_7_arches (for architecture armv7s):	Mach-O executable arm_v7s
+hello_7_arches (for architecture arm64):	Mach-O 64-bit executable arm64
+
+
+*/
 
 #ifndef FAT_MAGIC_64
 # define FAT_MAGIC_64  0xcafebabf
@@ -55,13 +89,13 @@ struct fat_arch_64 {
 # define FAT_CIGAM_64  0xbfbafeca
 #endif
 
-
 typedef struct load_command		t_lc;
 typedef struct symtab_command	t_stc;
 typedef struct nlist			t_nlist;
 
 typedef struct				t_file
 {
+	int						print_names;
 	char					*fn;
 	int						fd;
 	struct stat				st;
@@ -75,7 +109,10 @@ typedef struct				t_file
 typedef	struct				s_bin
 {
 	t_file					*parent;
+	uint32_t				cputype;
+	uint32_t				cpusubtype;
 	char					*fn;
+	char					*arch;
 	off_t					fsize;
 	void					*data;
 	int						is_64bit;

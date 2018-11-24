@@ -10,7 +10,7 @@ fi
 
 outputf='DiffyDiff/'
 
-prog1='./ft_nm '
+prog1='../ft_nm '
 ext1='.alex'
 prog2='/usr/bin/nm '
 ext2='.nemo'
