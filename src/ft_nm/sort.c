@@ -6,7 +6,7 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/23 23:54:10 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/23 23:56:39 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/23 23:59:57 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,7 +55,6 @@ uint32_t	qs_partition(t_bin *b, uint32_t lo, uint32_t hi)
 	}
 	return (j);
 }
-
 
 void		quicksort(t_bin *b, uint32_t lo, uint32_t hi)
 {

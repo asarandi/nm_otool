@@ -6,7 +6,7 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/23 19:37:54 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/23 22:48:30 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/24 00:00:20 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,7 @@
 ** copy n bytes from src to dst, and null terminate dest
 */
 
-char		*ft_strcpx(char *dst, char *src, size_t n)
+char	*ft_strcpx(char *dst, char *src, size_t n)
 {
 	size_t i;
 
