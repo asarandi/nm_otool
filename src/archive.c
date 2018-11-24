@@ -6,11 +6,31 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/23 19:37:54 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/23 21:12:36 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/23 22:48:30 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "common.h"
+
+/*
+** copy n bytes from src to dst, and null terminate dest
+*/
+
+char		*ft_strcpx(char *dst, char *src, size_t n)
+{
+	size_t i;
+
+	i = 0;
+	while (i < n)
+	{
+		if (!src[i])
+			break ;
+		dst[i] = src[i];
+		i++;
+	}
+	dst[i] = 0;
+	return (dst);
+}
 
 /*
 ** man 5 ar

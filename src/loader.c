@@ -6,7 +6,7 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/23 19:39:16 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/23 21:22:44 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/23 22:48:40 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,26 @@
 ** returns 0 on success, 1 on failure (prints error msg)
 ** will populate (t_bin *) with values for other functions
 */
+
+int	is_valid_magic(void *single, int *is_64bit, int *is_swapped)
+{
+	struct mach_header	*mh;
+
+	mh = (struct mach_header *)single;
+	if ((mh->magic == MH_MAGIC_64) || (mh->magic == MH_CIGAM_64))
+	{
+		*is_64bit = 1;
+		*is_swapped = (mh->magic == MH_MAGIC_64) ? 0 : 1;
+		return (1);
+	}
+	if ((mh->magic == MH_MAGIC) || (mh->magic == MH_CIGAM))
+	{
+		*is_64bit = 0;
+		*is_swapped = (mh->magic == MH_MAGIC) ? 0 : 1;
+		return (1);
+	}
+	return (0);
+}
 
 int	validate_macho(t_bin *b)
 {

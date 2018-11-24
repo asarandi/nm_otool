@@ -6,7 +6,7 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/16 01:02:57 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/23 21:53:22 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/23 22:48:14 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,18 +40,24 @@ void	run_otool(t_bin *b)
 
 int		main(int ac, char **av)
 {
-	int			i;
-	t_file		f;
+	int		i;
+	t_file	f;
 
 	i = 1;
 	while (i < ac)
 	{
 		(void)ft_memset(&f, 0, sizeof(t_file));
+		if (ac > 2)
+			f.print_names = 1;
 		f.fn = av[i];
 		(void)process_file(&f, &run_otool);
 		i++;
 	}
 	if (i == 1)
-		(void)show_usage(av[0]);
+	{
+		(void)ft_memset(&f, 0, sizeof(t_file));
+		f.fn = "a.out";
+		(void)process_file(&f, &run_otool);
+	}
 	return (0);
 }
