@@ -6,7 +6,7 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/23 19:46:47 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/23 23:50:44 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/24 02:40:34 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,7 +42,10 @@ int			msgerr(char *err, char *fn);
 int			otool_find(t_bin *b, char *s1, char *s2);
 int			otool_print_address(t_bin *b, uint64_t x);
 int			otool_print_byte(unsigned char c);
-int			otool_print_section(t_bin *b, void *seg, void *sect);
+int			otool_print_fn(t_bin *b);
+int			otool_print_section(t_bin *b, void *sect);
+int			otool_print_style(
+		t_bin *b, void *data, uint64_t *idx, uint64_t size);
 int			print_arch_info(t_file *f, void *fat_arch);
 int			process_file(t_file *f, void (*func)(t_bin *));
 int			process_macho(t_bin *b, void (*func)(t_bin *));

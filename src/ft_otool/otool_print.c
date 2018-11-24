@@ -6,12 +6,11 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/23 21:46:35 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/24 01:39:26 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/24 02:51:27 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "otool.h"
-#define OTOOL_ROW_LENGTH 16
 
 int	otool_print_byte(unsigned char c)
 {
@@ -64,7 +63,8 @@ int	otool_print_style(t_bin *b, void *data, uint64_t *idx, uint64_t size)
 	cputype = swap32(b, b->mh->cputype);
 	if (((cputype & 0xff) != CPU_TYPE_X86) && (*idx <= size - 4))
 	{
-		(void)otool_print_dword(*(uint32_t *)data);
+		(void)otool_print_dword(
+				swap32(b, *(uint32_t *)data));
 		(*idx) += 4;
 	}
 	else
@@ -75,26 +75,19 @@ int	otool_print_style(t_bin *b, void *data, uint64_t *idx, uint64_t size)
 	return (0);
 }
 
-int	otool_print_section(t_bin *b, void *seg, void *sect)
+int	otool_print_fn(t_bin *b)
 {
-	uint64_t		i;
-	uint64_t		size;
-	uint64_t		addr;
-	uint32_t		offset;
-
-	(void)ft_printf("%s:\nContents of (%s,%s) section", b->fn,
-			((struct segment_command *)seg)->segname,
-			((struct section *)sect)->sectname);
-	i = 0;
-	offset = section_offset(b, sect);
-	size = section_size(b, sect);
-	addr = section_addr(b, sect);
-	while (i < size)
+	if (b->parent->is_archive)
+		ft_printf("%s(%s):\n", b->parent->fn, b->fn);
+	else if (b->parent->is_fat)
 	{
-		if (i % OTOOL_ROW_LENGTH == 0)
-			(void)otool_print_address(b, addr + i);
-		(void)otool_print_style(b, &b->data[offset + i], &i, size);
+		ft_printf("%s", b->parent->fn);
+		if ((ft_strcmp(b->arch, HOST_ARCH) != 0) &&
+				(b->arch != EMPTY_STRING))
+			ft_printf(" (architecture %s)", b->arch);
+		ft_printf(":\n");
 	}
-	(void)ft_printf("\n");
+	else if (b->parent->print_names)
+		ft_printf("%s:\n", b->parent->fn);
 	return (0);
 }

@@ -6,11 +6,36 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/11/16 01:02:57 by asarandi          #+#    #+#             */
-/*   Updated: 2018/11/23 22:48:14 by asarandi         ###   ########.fr       */
+/*   Updated: 2018/11/24 03:03:34 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "otool.h"
+
+int		otool_print_section(t_bin *b, void *sect)
+{
+	uint64_t		i;
+	uint64_t		size;
+	uint64_t		addr;
+	uint32_t		offset;
+
+	(void)otool_print_fn(b);
+	(void)ft_printf("Contents of (%s,%s) section",
+			((struct section *)sect)->segname,
+			((struct section *)sect)->sectname);
+	i = 0;
+	offset = section_offset(b, sect);
+	size = section_size(b, sect);
+	addr = section_addr(b, sect);
+	while (i < size)
+	{
+		if (i % OTOOL_ROW_LENGTH == 0)
+			(void)otool_print_address(b, addr + i);
+		(void)otool_print_style(b, &b->data[offset + i], &i, size);
+	}
+	(void)ft_printf("\n");
+	return (0);
+}
 
 int		otool_find(t_bin *b, char *s1, char *s2)
 {
@@ -21,13 +46,15 @@ int		otool_find(t_bin *b, char *s1, char *s2)
 
 	if (validate_macho(b) != 0)
 		return (1);
+	if (swap32(b, b->mh->filetype) == MH_OBJECT)
+		s1 = EMPTY_STRING;
 	i = 0;
 	while ((seg = get_segment_by_name_idx(b, s1, i++)) != NULL)
 	{
 		j = 0;
 		while ((sec = get_section_by_name_idx(b, seg, s2, j++)) != NULL)
 		{
-			(void)otool_print_section(b, seg, sec);
+			(void)otool_print_section(b, sec);
 		}
 	}
 	return (0);
