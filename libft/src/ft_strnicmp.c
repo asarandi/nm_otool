@@ -6,7 +6,7 @@
 /*   By: asarandi <asarandi@student.42.us.org>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/09/20 15:40:36 by asarandi          #+#    #+#             */
-/*   Updated: 2019/01/12 01:14:00 by asarandi         ###   ########.fr       */
+/*   Updated: 2019/01/12 01:30:43 by asarandi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,10 +25,8 @@ int	ft_strnicmp(const char *s1, const char *s2, size_t n)
 		b = (unsigned char)s2[i];
 		if (ft_isalpha(a) && ft_isalpha(b))
 		{
-			if (a <= 'Z')
-				a += 'a' - 'A';
-			if (b <= 'Z')
-				b += 'a' - 'A';
+			a = ft_tolower(a);
+			b = ft_tolower(b);
 		}
 		if (a != b)
 			return (a - b);
